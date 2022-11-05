@@ -1,7 +1,10 @@
 [package]
-name = "fanorona"
-version = "0.1.0"
-authors = ["Abhijeet Krishnan"]
+name = "rust-fanorona"
+version = "0.2.0"
+authors = ["Abhijeet Krishnan <abhijeet.krishnan@gmail.com>"]
+edition = "2021"
+description = "rust-fanorona is a Fanorona library for Rust, with move generation and move validation."
+repository = "https://github.com/AbhijeetKrishnan/rust-fanorona"
 
 [dependencies]
 regex = "^1.6.0"

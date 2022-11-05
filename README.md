@@ -1,1 +1,1 @@
-# Fanorona Engine in Rust
+# rust-fanorona

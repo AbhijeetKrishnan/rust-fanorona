@@ -33,6 +33,7 @@ impl BaseBoard {
 
     pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), Box<dyn std::error::Error>> {
         let fmove = FanoronaMove::parse_move_str(fmove_str).ok_or_else(|| Box::<dyn std::error::Error>::from("could not parse move"))?;
+        println!("{:?}", fmove);
         self.push(fmove)
     }
 }

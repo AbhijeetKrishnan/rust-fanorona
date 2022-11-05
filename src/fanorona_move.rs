@@ -1,4 +1,7 @@
 use std::str;
+use std::fmt;
+
+use crate::Square;
 
 use regex::Regex;
 
@@ -13,8 +16,24 @@ pub enum Direction {
     SouthEast,
 }
 
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let dir_str = match self {
+            Direction::North => String::from("N"),
+            Direction::South => String::from("S"),
+            Direction::East => String::from("E"),
+            Direction::West => String::from("W"),
+            Direction::NorthWest => String::from("NW"),
+            Direction::NorthEast => String::from("NE"),
+            Direction::SouthWest => String::from("SW"),
+            Direction::SouthEast => String::from("SE"),
+        };
+        write!(f, "{}", dir_str)
+    }
+}
+
 impl Direction {
-    fn parse_dir(dir_str: &str) -> Option<Direction> {
+    fn from_str(dir_str: &str) -> Option<Direction> {
         match dir_str {
             "N" | "n" => Some(Direction::North),
             "S" | "s" => Some(Direction::South),
@@ -46,11 +65,17 @@ impl CaptureType {
 
 pub enum FanoronaMove {
     Move {
-        from: (u8, u8),
+        from: Square,
         direction: Direction,
         capture_type: Option<CaptureType>,
     },
     EndTurn,
+}
+
+impl fmt::Display for FanoronaMove {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+    }
 }
 
 impl FanoronaMove {
@@ -84,9 +109,9 @@ impl FanoronaMove {
             Some(end_turn) => Some(FanoronaMove::EndTurn),
             None => {
                 let from_str = caps.name("from")?.as_str();
-                let from = Self::from_str_to_tuple(from_str)?;
+                let from = Square::;
                 let dir_str = caps.name("direction")?.as_str();
-                let direction = Direction::parse_dir(dir_str)?;
+                let direction = Direction::from_str(dir_str)?;
                 let capture_type = caps.name("capture_type").map(|s| CaptureType::parse_capture(s.as_str()))?;
                 Some(FanoronaMove::Move {
                     from,
