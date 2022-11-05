@@ -1,4 +1,4 @@
-use std::{fmt};
+use std::fmt;
 
 #[derive(Debug)]
 pub enum CaptureTypeError {
@@ -35,9 +35,12 @@ impl TryFrom<&str> for CaptureType {
     type Error = CaptureTypeError;
     fn try_from(capture_type_str: &str) -> Result<CaptureType, CaptureTypeError> {
         match capture_type_str {
-            "F" | "f" => Ok(CaptureType::Approach), // [F]orward
+            "F" | "f" => Ok(CaptureType::Approach),   // [F]orward
             "B" | "b" => Ok(CaptureType::Withdrawal), // [B]ackward
-            _ => Err(CaptureTypeError::TryFromStrError(String::from(format!("could not parse {} as capture type", capture_type_str)))),
+            _ => Err(CaptureTypeError::TryFromStrError(String::from(format!(
+                "could not parse {} as capture type",
+                capture_type_str
+            )))),
         }
     }
 }

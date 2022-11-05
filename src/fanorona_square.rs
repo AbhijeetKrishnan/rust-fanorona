@@ -57,22 +57,27 @@ impl TryFrom<&str> for Square {
             .chars()
             .nth(1)
             .ok_or_else(|| SquareError::TryFromStrError(String::from("row char does not exist")))?
-            .to_digit(10).ok_or_else(|| SquareError::TryFromStrError(String::from("could not convert row to number")))? as u8;
-        let col = match square_str
-            .chars()
-            .nth(0)
-            .ok_or_else(|| SquareError::TryFromStrError(String::from("col char does not exist")))? {
-            'a' | 'A' => Ok(0u8),
-            'b' | 'B' => Ok(1u8),
-            'c' | 'C' => Ok(2u8),
-            'd' | 'D' => Ok(3u8),
-            'e' | 'E' => Ok(4u8),
-            'f' | 'F' => Ok(5u8),
-            'g' | 'G' => Ok(6u8),
-            'h' | 'H' => Ok(7u8),
-            'i' | 'I' => Ok(8u8),
-            _ => Err(SquareError::TryFromStrError(String::from("could not convert col to number"))),
-        }?;
+            .to_digit(10)
+            .ok_or_else(|| {
+                SquareError::TryFromStrError(String::from("could not convert row to number"))
+            })? as u8;
+        let col =
+            match square_str.chars().nth(0).ok_or_else(|| {
+                SquareError::TryFromStrError(String::from("col char does not exist"))
+            })? {
+                'a' | 'A' => Ok(0u8),
+                'b' | 'B' => Ok(1u8),
+                'c' | 'C' => Ok(2u8),
+                'd' | 'D' => Ok(3u8),
+                'e' | 'E' => Ok(4u8),
+                'f' | 'F' => Ok(5u8),
+                'g' | 'G' => Ok(6u8),
+                'h' | 'H' => Ok(7u8),
+                'i' | 'I' => Ok(8u8),
+                _ => Err(SquareError::TryFromStrError(String::from(
+                    "could not convert col to number",
+                ))),
+            }?;
         Ok(Square::from((row, col)))
     }
 }

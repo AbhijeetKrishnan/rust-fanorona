@@ -12,7 +12,17 @@ const BB_POS: [[u64; 9]; 5] = [
     [         0x100,          0x80,          0x40,          0x20,          0x10,          0x8,          0x4,          0x2,          0x1],
 ];
 const BB_ROW: [u64; 5] = [0x1ff000000000, 0xff8000000, 0x7fc0000, 0x3fe00, 0x1ff];
-const BB_COL: [u64; 9] = [0x100804020100, 0x80402010080, 0x40201008040, 0x20100804020, 0x10080402010, 0x8040201008, 0x4020100804, 0x2010080402, 0x1008040201];
+const BB_COL: [u64; 9] = [
+    0x100804020100,
+    0x80402010080,
+    0x40201008040,
+    0x20100804020,
+    0x10080402010,
+    0x8040201008,
+    0x4020100804,
+    0x2010080402,
+    0x1008040201,
+];
 
 pub struct BaseBoard {
     black: u64,
@@ -50,6 +60,10 @@ impl fmt::Display for BaseBoard {
                 }
             }
         }
-        write!(f, "{:?}\n{:?}\n{:?}\n{:?}\n{:?}", board_chars[0], board_chars[1], board_chars[2], board_chars[3], board_chars[4])
+        write!(
+            f,
+            "{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
+            board_chars[0], board_chars[1], board_chars[2], board_chars[3], board_chars[4]
+        )
     }
 }

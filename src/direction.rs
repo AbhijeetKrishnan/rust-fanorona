@@ -56,7 +56,10 @@ impl TryFrom<&str> for Direction {
             "NE" | "ne" | "nE" | "Ne" => Ok(Direction::NorthEast),
             "SW" | "sw" | "sW" | "Sw" => Ok(Direction::SouthWest),
             "SE" | "se" | "sE" | "Se" => Ok(Direction::SouthEast),
-            _ => Err(DirectionError::TryFromStrError(String::from(format!("could not parse {} as direction", dir_str)))),
+            _ => Err(DirectionError::TryFromStrError(String::from(format!(
+                "could not parse {} as direction",
+                dir_str
+            )))),
         }
     }
 }
@@ -64,4 +67,7 @@ impl TryFrom<&str> for Direction {
 #[test]
 fn test_try_from() {
     assert_eq!(Direction::North, Direction::try_from("N").unwrap());
+    assert_eq!(Direction::SouthEast, Direction::try_from("sE").unwrap());
+    assert_ne!(Direction::NorthWest, Direction::try_from("Sw").unwrap());
+    assert!(Direction::try_from("Sww").is_err());
 }
