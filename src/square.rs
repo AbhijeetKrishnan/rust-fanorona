@@ -81,3 +81,11 @@ impl TryFrom<&str> for Square {
         Ok(Square::from((row, col)))
     }
 }
+
+impl Square {
+    
+    #[inline]
+    pub fn idx(&self) -> usize {
+        self.0 as usize
+    }
+}

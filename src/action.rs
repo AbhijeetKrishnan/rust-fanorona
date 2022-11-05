@@ -3,7 +3,7 @@ use std::str;
 
 use crate::capture_type::CaptureTypeError;
 use crate::direction::DirectionError;
-use crate::fanorona_square::SquareError;
+use crate::square::SquareError;
 use crate::{CaptureType, Direction, Square};
 
 use regex::Regex;

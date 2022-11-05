@@ -1,16 +1,24 @@
 extern crate regex;
 
-mod fanorona_board;
-pub use fanorona_board::BaseBoard;
+mod bitboard;
+use bitboard::BaseBoard;
 
-mod fanorona_move;
-pub use fanorona_move::Move;
+mod action;
+use action::Move;
+use action::MoveError;
 
-mod fanorona_square;
-pub use fanorona_square::Square;
+mod square;
+use square::Square;
 
 mod direction;
-pub use direction::Direction;
+use direction::Direction;
 
 mod capture_type;
-pub use capture_type::CaptureType;
+use capture_type::CaptureType;
+
+mod color;
+use color::Color;
+use color::Piece;
+
+mod board;
+pub use board::Board;
