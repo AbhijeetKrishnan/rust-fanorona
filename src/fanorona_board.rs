@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::FanoronaMove;
+use crate::Move;
 
 const BB_EMPTY: u64 = 0;
 const BB_ALL: u64 = !0;
@@ -27,12 +27,12 @@ impl BaseBoard {
         }
     }
 
-    pub fn push(&mut self, fmove: FanoronaMove) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn push(&mut self, fmove: Move) -> Result<(), Box<dyn std::error::Error>> {
         todo!()
     }
 
     pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), Box<dyn std::error::Error>> {
-        let fmove = FanoronaMove::parse_move_str(fmove_str).ok_or_else(|| Box::<dyn std::error::Error>::from("could not parse move"))?;
+        let fmove = Move::try_from(fmove_str)?;
         println!("{:?}", fmove);
         self.push(fmove)
     }

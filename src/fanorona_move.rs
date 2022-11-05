@@ -1,123 +1,132 @@
 use std::str;
 use std::fmt;
 
-use crate::Square;
+use crate::capture_type::CaptureTypeError;
+use crate::direction::DirectionError;
+use crate::fanorona_square::SquareError;
+use crate::{Square, Direction, CaptureType};
 
 use regex::Regex;
 
-pub enum Direction {
-    North,
-    South,
-    East,
-    West,
-    NorthWest,
-    NorthEast,
-    SouthWest,
-    SouthEast,
+#[derive(Debug)]
+pub enum MoveError {
+    TryFromStrError(String),
+    RegexError(regex::Error),
 }
 
-impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let dir_str = match self {
-            Direction::North => String::from("N"),
-            Direction::South => String::from("S"),
-            Direction::East => String::from("E"),
-            Direction::West => String::from("W"),
-            Direction::NorthWest => String::from("NW"),
-            Direction::NorthEast => String::from("NE"),
-            Direction::SouthWest => String::from("SW"),
-            Direction::SouthEast => String::from("SE"),
-        };
-        write!(f, "{}", dir_str)
+impl std::error::Error for MoveError {}
+
+impl From<regex::Error> for MoveError {
+    fn from(err: regex::Error) -> MoveError {
+        MoveError::RegexError(err)
     }
 }
 
-impl Direction {
-    fn from_str(dir_str: &str) -> Option<Direction> {
-        match dir_str {
-            "N" | "n" => Some(Direction::North),
-            "S" | "s" => Some(Direction::South),
-            "E" | "e" => Some(Direction::East),
-            "W" | "w" => Some(Direction::West),
-            "NW" | "nw" | "nW" | "Nw" => Some(Direction::NorthWest),
-            "NE" | "ne" | "nE" | "Ne" => Some(Direction::NorthEast),
-            "SW" | "sw" | "sW" | "Sw" => Some(Direction::SouthWest),
-            "SE" | "se" | "sE" | "Se" => Some(Direction::SouthEast),
-            _ => None,
+impl From<SquareError> for MoveError {
+    fn from(err: SquareError) -> MoveError {
+        MoveError::TryFromStrError(err.to_string())
+    }
+}
+
+impl From<DirectionError> for MoveError {
+    fn from(err: DirectionError) -> MoveError {
+        MoveError::TryFromStrError(err.to_string())
+    }
+}
+
+impl From<CaptureTypeError> for MoveError {
+    fn from(err: CaptureTypeError) -> MoveError {
+        MoveError::TryFromStrError(err.to_string())
+    }
+}
+
+impl fmt::Display for MoveError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MoveError::TryFromStrError(msg) => write!(f, "{}", msg),
+            MoveError::RegexError(err) => write!(f, "{}", err.to_string()),
         }
     }
 }
 
-pub enum CaptureType {
-    Approach,
-    Withdrawal,
-}
-
-impl CaptureType {
-    fn parse_capture(capture_str: &str) -> Option<CaptureType> {
-        match capture_str {
-            "F" | "f" => Some(CaptureType::Approach), // [F]orward
-            "B" | "b" => Some(CaptureType::Withdrawal), // [B]ackward
-            _ => None,
-        }
-    }
-}
-
-pub enum FanoronaMove {
+#[derive(Debug)]
+pub enum Move {
     Move {
         from: Square,
         direction: Direction,
-        capture_type: Option<CaptureType>,
+    },
+    Capture {
+        from: Square,
+        direction: Direction,
+        capture_type: CaptureType,
     },
     EndTurn,
 }
 
-impl fmt::Display for FanoronaMove {
+impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        
+        match self {
+            Move::Move { 
+                from, 
+                direction } => 
+                    write!(
+                        f, 
+                        "{}{}", 
+                        from.to_string(), 
+                        direction.to_string(),
+                    ),
+            Move::Capture { from, direction, capture_type } =>
+                    write!(f, "{}{}{}", from.to_string(), direction.to_string(), capture_type.to_string()),
+            Move::EndTurn => write!(f, "X")
+        }
     }
 }
 
-impl FanoronaMove {
-    fn from_str_to_tuple(from_str: &str) -> Option<(u8, u8)> {
-        let row = from_str.chars().nth(1).unwrap().to_digit(10)? as u8;
-        let col = match from_str.chars().nth(0).unwrap() {
-            'a' | 'A' => Some(0u8),
-            'b' | 'B' => Some(1u8),
-            'c' | 'C' => Some(2u8),
-            'd' | 'D' => Some(3u8),
-            'e' | 'E' => Some(4u8),
-            'f' | 'F' => Some(5u8),
-            'g' | 'G' => Some(6u8),
-            'h' | 'H' => Some(7u8),
-            'i' | 'I' => Some(8u8),
-            _ => None,
-        }?;
-        Some((row, col))
-    }
-
-    pub fn parse_move_str(move_str: &'static str) -> Option<FanoronaMove> {
+impl TryFrom<&str> for Move {
+    type Error = MoveError;
+    fn try_from(move_str: &str) -> Result<Move, MoveError> {
         let re = Regex::new(r"(?x)
             ^(?P<from>[a-iA-I][1-5])
             (?P<direction>n|s|e|w|nw|ne|sw|se|N|S|E|W|NW|NE|SW|SE)
             (?P<capture_type>[fbFB])?
             |
             ^(?P<end_turn>[Xx])
-        ").ok()?;
-        let caps = re.captures(move_str)?;
+        ")?;
+        let caps = re.captures(move_str).ok_or_else(|| MoveError::TryFromStrError(String::from("regex did not capture any groups")))?;
         match caps.name("end_turn") {
-            Some(end_turn) => Some(FanoronaMove::EndTurn),
+            Some(_) => Ok(Move::EndTurn),
             None => {
-                let from_str = caps.name("from")?.as_str();
-                let from = Square::;
-                let dir_str = caps.name("direction")?.as_str();
-                let direction = Direction::from_str(dir_str)?;
-                let capture_type = caps.name("capture_type").map(|s| CaptureType::parse_capture(s.as_str()))?;
-                Some(FanoronaMove::Move {
-                    from,
-                    direction,
-                    capture_type,
-                })
+                let from_str = caps.name("from")
+                    .ok_or_else(|| MoveError::TryFromStrError(String::from("from group was not captured")))?
+                    .as_str();
+                let from = Square::try_from(from_str)?;
+
+                let dir_str = caps.name("direction")
+                    .ok_or_else(|| MoveError::TryFromStrError(String::from("direction group was not captured")))?
+                    .as_str();
+                let direction = Direction::try_from(dir_str)?;
+
+                let capture_type_opt: Option<CaptureType>;
+                match caps.name("capture_type") {
+                    None => capture_type_opt = None,
+                    Some(capture_type_m) => {
+                        let capture_type_str = capture_type_m.as_str();
+                        let capture_type_res = CaptureType::try_from(capture_type_str)?;
+                        capture_type_opt = Some(capture_type_res);
+                    }
+                }
+
+                match capture_type_opt {
+                    Some(capture_type) => Ok(Move::Capture {
+                        from,
+                        direction,
+                        capture_type,
+                    }),
+                    None => Ok(Move::Move {
+                        from,
+                        direction
+                    }),
+                }
             },
         }
     }
