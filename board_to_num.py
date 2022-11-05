@@ -23,7 +23,7 @@ BLACK = [
 ]
 
 def board_to_num(board):
-    binary_string = ''.join([''.join(map(str, row)) for row in board])
+    binary_string = ''.join(reversed([''.join(map(str, row)) for row in board]))
     hex_repr = hex(int(binary_string, 2))
     return hex_repr
 
@@ -58,14 +58,14 @@ def get_bb_col_table():
     return bb_col
 
 if __name__ == '__main__':
-    # print(board_to_num(WHITE))
-    # print(board_to_num(BLACK))
+    print(board_to_num(WHITE))
+    print(board_to_num(BLACK))
     
-    lookup = get_bb_pos_table()
-    for col in range(9):
-        for row in range(5):
+    # lookup = get_bb_pos_table()
+    for row in range(5):
+        for col in range(9):
             col_letter = chr(ord('A') + col)
-            print(f"const BB_{col_letter}{row + 1} = {str(lookup[row][col])};")
-    print('\n'.join("[{}],".format(', '.join("BB_{}{}".format(chr(ord('A') + col), row) for col in range(9))) for row in range(5, 0, -1)))
+            print(f"const BB_{col_letter}{row + 1} = 1 << {row * 9 + col};")
+    # print('\n'.join("[{}],".format(', '.join("BB_{}{}".format(chr(ord('A') + col), row) for col in range(9))) for row in range(5, 0, -1)))
     # print('\n'.join([', '.join(map(str, row)) for row in lookup]))
     # print(', '.join([f'{str(val)}' for val in get_bb_col_table()]))
