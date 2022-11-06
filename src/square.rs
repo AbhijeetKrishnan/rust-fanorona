@@ -1,5 +1,7 @@
 use std::{fmt, string::String};
 
+use crate::direction::Direction;
+
 #[derive(Debug)]
 pub enum SquareError {
     TryFromStrError(String),
@@ -15,37 +17,55 @@ impl fmt::Display for SquareError {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Square(u8);
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Square(usize);
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let (row, col): (u8, u8) = (*self).into();
+        let (row, col): (usize, usize) = (*self).into();
         let row_str = row.to_string();
         let col_str = match col {
-            0u8 => Ok('A'),
-            1u8 => Ok('B'),
-            2u8 => Ok('C'),
-            3u8 => Ok('D'),
-            4u8 => Ok('E'),
-            5u8 => Ok('F'),
-            6u8 => Ok('G'),
-            7u8 => Ok('H'),
-            8u8 => Ok('I'),
+            0usize => Ok('A'),
+            1usize => Ok('B'),
+            2usize => Ok('C'),
+            3usize => Ok('D'),
+            4usize => Ok('E'),
+            5usize => Ok('F'),
+            6usize => Ok('G'),
+            7usize => Ok('H'),
+            8usize => Ok('I'),
             _ => Err(fmt::Error),
         }?;
         write!(f, "{}{}", row_str, col_str)
     }
 }
 
-impl From<(u8, u8)> for Square {
-    fn from(move_tuple: (u8, u8)) -> Square {
+impl From<u32> for Square {
+    fn from(sq: u32) -> Self {
+        Square(sq as usize)
+    }
+}
+
+impl From<usize> for Square {
+    fn from(sq: usize) -> Self {
+        Square(sq)
+    }
+}
+
+impl From<(usize, usize)> for Square {
+    fn from(move_tuple: (usize, usize)) -> Square {
         Square(move_tuple.0 * 9 + move_tuple.1)
     }
 }
 
-impl Into<(u8, u8)> for Square {
-    fn into(self) -> (u8, u8) {
+impl Into<usize> for Square {
+    fn into(self) -> usize {
+        self.0
+    }
+}
+
+impl Into<(usize, usize)> for Square {
+    fn into(self) -> (usize, usize) {
         (self.0 / 9, self.0 % 9)
     }
 }
@@ -60,20 +80,20 @@ impl TryFrom<&str> for Square {
             .to_digit(10)
             .ok_or_else(|| {
                 SquareError::TryFromStrError(String::from("could not convert row to number"))
-            })? as u8;
+            })? as usize;
         let col =
             match square_str.chars().nth(0).ok_or_else(|| {
                 SquareError::TryFromStrError(String::from("col char does not exist"))
             })? {
-                'a' | 'A' => Ok(0u8),
-                'b' | 'B' => Ok(1u8),
-                'c' | 'C' => Ok(2u8),
-                'd' | 'D' => Ok(3u8),
-                'e' | 'E' => Ok(4u8),
-                'f' | 'F' => Ok(5u8),
-                'g' | 'G' => Ok(6u8),
-                'h' | 'H' => Ok(7u8),
-                'i' | 'I' => Ok(8u8),
+                'a' | 'A' => Ok(0usize),
+                'b' | 'B' => Ok(1usize),
+                'c' | 'C' => Ok(2usize),
+                'd' | 'D' => Ok(3usize),
+                'e' | 'E' => Ok(4usize),
+                'f' | 'F' => Ok(5usize),
+                'g' | 'G' => Ok(6usize),
+                'h' | 'H' => Ok(7usize),
+                'i' | 'I' => Ok(8usize),
                 _ => Err(SquareError::TryFromStrError(String::from(
                     "could not convert col to number",
                 ))),
@@ -83,9 +103,48 @@ impl TryFrom<&str> for Square {
 }
 
 impl Square {
-    
+    pub const fn new(sq: usize) -> Square {
+        Square(sq)
+    }
+
     #[inline]
-    pub fn idx(&self) -> usize {
-        self.0 as usize
+    pub const fn idx(&self) -> usize {
+        self.0
+    }
+
+    #[inline]
+    pub const fn translate(self, direction: Direction) -> Square {
+        match direction {
+            Direction::North => Square(self.0 + 9),
+            Direction::NorthEast => Square(self.0 + 10),
+            Direction::East => Square(self.0 + 1),
+            Direction::SouthEast => Square(self.0 - 8),
+            Direction::South => Square(self.0 - 9),
+            Direction::SouthWest => Square(self.0 - 10),
+            Direction::West => Square(self.0 - 1),
+            Direction::NorthWest => Square(self.0 + 8),
+        }
+    }
+}
+
+pub struct SquareIterator(usize);
+
+impl SquareIterator {
+    pub fn new(start: usize) -> Self {
+        SquareIterator(start)
+    }
+}
+
+impl Iterator for SquareIterator {
+    type Item = Square;
+    fn next(&mut self) -> Option<Self::Item> {
+        let result: Option<Square>;
+        if self.0 < 45 {
+            result = Some(Square(self.0));
+            self.0 += 1;
+        } else {
+            result = None;
+        }
+        result
     }
 }

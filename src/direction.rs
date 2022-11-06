@@ -1,6 +1,6 @@
 use std::{fmt, string::String};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     North,
     South,
@@ -43,6 +43,12 @@ impl fmt::Display for Direction {
     }
 }
 
+impl Into<usize> for Direction {
+    fn into(self) -> usize {
+        self.idx()
+    }
+}
+
 impl TryFrom<&str> for Direction {
     type Error = DirectionError;
 
@@ -60,6 +66,34 @@ impl TryFrom<&str> for Direction {
                 "could not parse {} as direction",
                 dir_str
             )))),
+        }
+    }
+}
+
+impl Direction {
+    pub const fn idx(&self) -> usize {
+        match self {
+            Direction::North => 0usize,
+            Direction::NorthEast => 1usize,
+            Direction::East => 2usize,
+            Direction::SouthEast => 3usize,
+            Direction::South => 4usize,
+            Direction::SouthWest => 5usize,
+            Direction::West => 6usize,
+            Direction::NorthWest => 7usize,
+        }
+    }
+
+    pub const fn mirror(self) -> Direction {
+        match self {
+            Direction::North => Direction::South,
+            Direction::NorthEast => Direction::SouthWest,
+            Direction::East => Direction::West,
+            Direction::SouthEast => Direction::NorthWest,
+            Direction::South => Direction::North,
+            Direction::SouthWest => Direction::NorthEast,
+            Direction::West => Direction::East,
+            Direction::NorthWest => Direction::SouthEast,
         }
     }
 }

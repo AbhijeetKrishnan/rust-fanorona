@@ -1,7 +1,6 @@
 use std::fmt;
 
-use crate::{BaseBoard, Piece, Move, MoveError};
-
+use crate::{BaseBoard, Move, MoveError, Piece};
 
 pub struct Board {
     base_board: BaseBoard,
@@ -16,22 +15,41 @@ impl fmt::Display for Board {
 }
 
 impl Board {
-
     pub fn new() -> Board {
         Board {
             base_board: BaseBoard::new(),
-            turn: Piece::WHITE,
+            turn: Piece::White,
             move_stack: vec![],
         }
     }
 
-    pub fn push(&mut self, fmove: Move) -> Result<(), MoveError> {
-        todo!()
+    fn pass_turn(&mut self) {
+        self.turn = match self.turn {
+            Piece::Black => Piece::White,
+            Piece::White => Piece::Black,
+        }
+    }
+
+    pub fn push(&mut self, fmove: Move) {
+        match fmove {
+            Move::EndTurn => self.pass_turn(),
+            Move::Move { from, direction } => {
+                self.base_board.make_capture(from, direction, None);
+            }
+            Move::Capture {
+                from,
+                direction,
+                capture_type,
+            } => {
+                self.base_board
+                    .make_capture(from, direction, Some(capture_type));
+            }
+        }
     }
 
     pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), MoveError> {
         let fmove = Move::try_from(fmove_str)?;
         println!("{:?}", fmove);
-        self.push(fmove)
+        Ok(self.push(fmove))
     }
 }
