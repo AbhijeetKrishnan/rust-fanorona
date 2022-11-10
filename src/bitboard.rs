@@ -11,7 +11,7 @@ const ROWS: usize = 5;
 const COLS: usize = 9;
 
 #[derive(Debug, Clone, Copy)]
-struct BitBoard(u64);
+pub struct BitBoard(u64);
 
 impl_op_ex!(!|bb: &BitBoard| -> BitBoard { BitBoard(!bb.0) });
 impl_op_ex!(&|bb1: &BitBoard, bb2: &BitBoard| -> BitBoard { BitBoard(bb1.0 & bb2.0) });
@@ -679,22 +679,20 @@ const BB_BLACK: BitBoard = BitBoard(0x1ffffa940000);
 const BB_WHITE: BitBoard = BitBoard(0x52bffff);
 
 pub struct BaseBoard {
-    black: BitBoard,
-    white: BitBoard,
+    pieces: [BitBoard; 2],
 }
 
 impl BaseBoard {
     pub fn new() -> BaseBoard {
         BaseBoard {
-            black: BB_BLACK,
-            white: BB_WHITE,
+            pieces: [BB_BLACK, BB_WHITE],
         }
     }
 
     fn piece_at(&self, at: Square) -> Option<Piece> {
-        if self.black & !BB_POS[at.idx()] > 0 {
+        if self.pieces[Piece::White] & !BB_POS[at.idx()] > 0 {
             Some(Piece::White)
-        } else if self.black & !BB_POS[at.idx()] > 0 {
+        } else if self.pieces[Piece::Black] & !BB_POS[at.idx()] > 0 {
             Some(Piece::Black)
         } else {
             None
@@ -703,16 +701,13 @@ impl BaseBoard {
 
     fn remove_piece_from(&mut self, at: Square) -> Option<Piece> {
         let piece = self.piece_at(at);
-        self.black &= !BB_POS[at.idx()];
-        self.white &= !BB_POS[at.idx()];
+        self.pieces[Piece::Black] &= !BB_POS[at.idx()];
+        self.pieces[Piece::White] &= !BB_POS[at.idx()];
         piece
     }
 
     fn set_piece_at(&mut self, piece: Piece, at: Square) {
-        match piece {
-            Piece::Black => self.black |= BB_POS[at.idx()],
-            Piece::White => self.white |= BB_POS[at.idx()],
-        }
+        self.pieces[piece] |= BB_POS[at.idx()]
     }
 
     fn make_paika(&mut self, from: Square, direction: Direction) {
@@ -724,13 +719,6 @@ impl BaseBoard {
         };
     }
 
-    fn get_boards_for_pov(&mut self, pov: Piece) -> (&mut BitBoard, &mut BitBoard) {
-        match pov {
-            Piece::Black => (&mut self.black, &mut self.white),
-            Piece::White => (&mut self.white, &mut self.black),
-        }
-    }
-
     pub fn make_capture(
         &mut self,
         from: Square,
@@ -740,26 +728,26 @@ impl BaseBoard {
         let moved_piece = self.piece_at(from).unwrap();
         self.make_paika(from, direction);
 
-        let (_, opp_pieces) = self.get_boards_for_pov(moved_piece);
+        let mut opp_pieces = self.pieces[moved_piece.other()];
         let capture_mask = match capture_type {
             Some(CaptureType::Approach) => {
-                BitBoard::get_capture_mask(*opp_pieces, from.translate(direction), direction)
+                BitBoard::get_capture_mask(opp_pieces, from.translate(direction), direction)
             }
             Some(CaptureType::Withdrawal) => BitBoard::get_capture_mask(
-                *opp_pieces,
+                opp_pieces,
                 from.translate(direction.mirror()),
                 direction.mirror(),
             ),
             None => {
-                BitBoard::get_capture_mask(*opp_pieces, from.translate(direction), direction)
+                BitBoard::get_capture_mask(opp_pieces, from.translate(direction), direction)
                     | BitBoard::get_capture_mask(
-                        *opp_pieces,
+                        opp_pieces,
                         from.translate(direction.mirror()),
                         direction.mirror(),
                     )
             }
         };
-        *opp_pieces &= !capture_mask;
+        opp_pieces &= !capture_mask;
     }
 }
 
@@ -768,9 +756,9 @@ impl fmt::Display for BaseBoard {
         let mut board_chars = [['.'; 9]; 5];
         for row in 0..5 {
             for col in 0..9 {
-                if self.white & BB_POS[row * 9 + col] > 0 {
+                if self.pieces[Piece::White] & BB_POS[row * 9 + col] > 0 {
                     board_chars[row][col] = 'W';
-                } else if self.black & BB_POS[row * 9 + col] > 0 {
+                } else if self.pieces[Piece::Black] & BB_POS[row * 9 + col] > 0 {
                     board_chars[row][col] = 'B';
                 }
             }
