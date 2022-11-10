@@ -93,8 +93,8 @@ mod tests {
     }
 }
 
-const BB_EMPTY: BitBoard = BitBoard(0x0); // empty board
-const BB_ALL: BitBoard = BitBoard(0x1fffffffffff); // full board
+pub const BB_EMPTY: BitBoard = BitBoard(0x0); // empty board
+pub const BB_ALL: BitBoard = BitBoard(0x1fffffffffff); // full board
 
 // per-square masks
 // TODO: possible to simplify this with a macro?
@@ -145,7 +145,7 @@ const BB_H5: BitBoard = BitBoard(1 << 43);
 const BB_I5: BitBoard = BitBoard(1 << 44);
 
 // BB_POS[sq] gives mask for square sq (A1 is 0, I5 is 44)
-const BB_POS: [BitBoard; ROWS * COLS] = [
+pub const BB_POS: [BitBoard; ROWS * COLS] = [
     BB_A1, BB_B1, BB_C1, BB_D1, BB_E1, BB_F1, BB_G1, BB_H1, BB_I1, BB_A2, BB_B2, BB_C2, BB_D2,
     BB_E2, BB_F2, BB_G2, BB_H2, BB_I2, BB_A3, BB_B3, BB_C3, BB_D3, BB_E3, BB_F3, BB_G3, BB_H3,
     BB_I3, BB_A4, BB_B4, BB_C4, BB_D4, BB_E4, BB_F4, BB_G4, BB_H4, BB_I4, BB_A5, BB_B5, BB_C5,
@@ -154,7 +154,7 @@ const BB_POS: [BitBoard; ROWS * COLS] = [
 
 // BB_MOVES[sq] gives mask for legal squares that can be moved to from sq
 // TODO: find way to generate this via const function
-const BB_MOVES: [BitBoard; ROWS * COLS] = [
+pub const BB_MOVES: [BitBoard; ROWS * COLS] = [
     BitBoard(0x602),
     BitBoard(0x405),
     BitBoard(0x1c0a),
@@ -202,7 +202,7 @@ const BB_MOVES: [BitBoard; ROWS * COLS] = [
     BitBoard(0x80c00000000),
 ];
 
-const BB_ROW: [BitBoard; ROWS] = [
+pub const BB_ROW: [BitBoard; ROWS] = [
     BitBoard(0x1ff),
     BitBoard(0x3fe00),
     BitBoard(0x7fc0000),
@@ -210,7 +210,7 @@ const BB_ROW: [BitBoard; ROWS] = [
     BitBoard(0x1ff000000000),
 ];
 
-const BB_COL: [BitBoard; COLS] = [
+pub const BB_COL: [BitBoard; COLS] = [
     BitBoard(0x1008040201),
     BitBoard(0x2010080402),
     BitBoard(0x4020100804),
@@ -222,7 +222,7 @@ const BB_COL: [BitBoard; COLS] = [
     BitBoard(0x100804020100),
 ];
 
-const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
+pub const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
     [
         BitBoard(0x1008040200),
         BitBoard(0x10040100400),
@@ -675,8 +675,8 @@ const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
     ],
 ];
 
-const BB_BLACK: BitBoard = BitBoard(0x1ffffa940000);
-const BB_WHITE: BitBoard = BitBoard(0x52bffff);
+pub const BB_BLACK: BitBoard = BitBoard(0x1ffffa940000);
+pub const BB_WHITE: BitBoard = BitBoard(0x52bffff);
 
 pub struct BaseBoard {
     pieces: [BitBoard; 2],

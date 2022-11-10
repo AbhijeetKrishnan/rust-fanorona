@@ -1,10 +1,11 @@
 use std::fmt;
 
-use crate::{BaseBoard, Move, MoveError, Piece};
+use crate::{BaseBoard, Move, MoveError, Piece, bitboard};
 
 pub struct Board {
     base_board: BaseBoard,
     turn: Piece,
+    visited: bitboard::BitBoard,
     move_stack: Vec<Move>,
 }
 
@@ -19,15 +20,13 @@ impl Board {
         Board {
             base_board: BaseBoard::new(),
             turn: Piece::White,
+            visited: bitboard::BB_EMPTY,
             move_stack: vec![],
         }
     }
 
     fn pass_turn(&mut self) {
-        self.turn = match self.turn {
-            Piece::Black => Piece::White,
-            Piece::White => Piece::Black,
-        }
+        self.turn = self.turn.other()
     }
 
     pub fn push(&mut self, fmove: Move) {
