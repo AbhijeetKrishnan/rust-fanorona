@@ -54,11 +54,7 @@ pub enum Move {
     Move {
         from: Square,
         direction: Direction,
-    },
-    Capture {
-        from: Square,
-        direction: Direction,
-        capture_type: CaptureType,
+        capture_type: Option<CaptureType>,
     },
     EndTurn,
 }
@@ -66,13 +62,13 @@ pub enum Move {
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Move::Move { from, direction } => {
+            Move::Move { from, direction, capture_type: None} => {
                 write!(f, "{}{}", from.to_string(), direction.to_string(),)
             }
-            Move::Capture {
+            Move::Move {
                 from,
                 direction,
-                capture_type,
+                capture_type: Some(capture_type),
             } => write!(
                 f,
                 "{}{}{}",
@@ -129,14 +125,7 @@ impl TryFrom<&str> for Move {
                     }
                 }
 
-                match capture_type_opt {
-                    Some(capture_type) => Ok(Move::Capture {
-                        from,
-                        direction,
-                        capture_type,
-                    }),
-                    None => Ok(Move::Move { from, direction }),
-                }
+                Ok(Move::Move{ from, direction, capture_type: capture_type_opt })
             }
         }
     }

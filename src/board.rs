@@ -32,16 +32,13 @@ impl Board {
     pub fn push(&mut self, fmove: Move) {
         match fmove {
             Move::EndTurn => self.pass_turn(),
-            Move::Move { from, direction } => {
-                self.base_board.make_capture(from, direction, None);
-            }
-            Move::Capture {
+            Move::Move {
                 from,
                 direction,
                 capture_type,
             } => {
                 self.base_board
-                    .make_capture(from, direction, Some(capture_type));
+                    .make_capture(from, direction, capture_type);
             }
         }
     }
