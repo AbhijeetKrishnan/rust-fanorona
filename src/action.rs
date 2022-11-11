@@ -49,7 +49,7 @@ impl fmt::Display for MoveError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Move {
     Move {
         from: Square,
@@ -62,7 +62,11 @@ pub enum Move {
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Move::Move { from, direction, capture_type: None} => {
+            Move::Move {
+                from,
+                direction,
+                capture_type: None,
+            } => {
                 write!(f, "{}{}", from.to_string(), direction.to_string(),)
             }
             Move::Move {
@@ -125,7 +129,11 @@ impl TryFrom<&str> for Move {
                     }
                 }
 
-                Ok(Move::Move{ from, direction, capture_type: capture_type_opt })
+                Ok(Move::Move {
+                    from,
+                    direction,
+                    capture_type: capture_type_opt,
+                })
             }
         }
     }

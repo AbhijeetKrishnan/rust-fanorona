@@ -678,6 +678,7 @@ pub const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
 pub const BB_BLACK: BitBoard = BitBoard(0x1ffffa940000);
 pub const BB_WHITE: BitBoard = BitBoard(0x52bffff);
 
+#[derive(Debug, Clone, Copy)]
 pub struct BaseBoard {
     pieces: [BitBoard; 2],
 }
@@ -689,7 +690,7 @@ impl BaseBoard {
         }
     }
 
-    fn piece_at(&self, at: Square) -> Option<Piece> {
+    pub fn piece_at(&self, at: Square) -> Option<Piece> {
         if self.pieces[Piece::White] & !BB_POS[at.idx()] > 0 {
             Some(Piece::White)
         } else if self.pieces[Piece::Black] & !BB_POS[at.idx()] > 0 {
@@ -699,24 +700,37 @@ impl BaseBoard {
         }
     }
 
-    fn remove_piece_from(&mut self, at: Square) -> Option<Piece> {
+    pub fn remove_piece_from(&mut self, at: Square) -> Option<Piece> {
         let piece = self.piece_at(at);
         self.pieces[Piece::Black] &= !BB_POS[at.idx()];
         self.pieces[Piece::White] &= !BB_POS[at.idx()];
         piece
     }
 
-    fn set_piece_at(&mut self, piece: Piece, at: Square) {
+    pub fn set_piece_at(&mut self, piece: Piece, at: Square) {
         self.pieces[piece] |= BB_POS[at.idx()]
     }
 
-    fn make_paika(&mut self, from: Square, direction: Direction) {
+    pub fn make_paika(&mut self, from: Square, direction: Direction) {
         let piece = self.remove_piece_from(from);
         let to = from.translate(direction);
         match piece {
             Some(piece) => self.set_piece_at(piece, to),
             None => (),
         };
+    }
+
+    pub fn capture_exists(&self) -> bool {
+        todo!()
+    }
+
+    pub fn is_capture(
+        &self,
+        from: Square,
+        direction: Direction,
+        capture_type: Option<CaptureType>,
+    ) -> bool {
+        todo!()
     }
 
     pub fn make_capture(
@@ -753,12 +767,12 @@ impl BaseBoard {
 
 impl fmt::Display for BaseBoard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut board_chars = [['.'; 9]; 5];
-        for row in 0..5 {
-            for col in 0..9 {
-                if self.pieces[Piece::White] & BB_POS[row * 9 + col] > 0 {
+        let mut board_chars = [['.'; COLS]; ROWS];
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                if self.pieces[Piece::White] & BB_POS[row * COLS + col] > 0 {
                     board_chars[row][col] = 'W';
-                } else if self.pieces[Piece::Black] & BB_POS[row * 9 + col] > 0 {
+                } else if self.pieces[Piece::Black] & BB_POS[row * COLS + col] > 0 {
                     board_chars[row][col] = 'B';
                 }
             }
@@ -766,7 +780,7 @@ impl fmt::Display for BaseBoard {
         write!(
             f,
             "{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
-            board_chars[0], board_chars[1], board_chars[2], board_chars[3], board_chars[4]
+            board_chars[4], board_chars[3], board_chars[2], board_chars[1], board_chars[0]
         )
     }
 }

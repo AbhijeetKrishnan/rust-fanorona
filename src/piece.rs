@@ -1,5 +1,5 @@
-use std::ops::{Index, IndexMut};
 use crate::bitboard::BitBoard;
+use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Piece {
@@ -18,7 +18,7 @@ impl Piece {
 
 impl Index<Piece> for [BitBoard; 2] {
     type Output = BitBoard;
-    
+
     fn index(&self, index: Piece) -> &Self::Output {
         match index {
             Piece::Black => &self[0],
@@ -28,7 +28,6 @@ impl Index<Piece> for [BitBoard; 2] {
 }
 
 impl IndexMut<Piece> for [BitBoard; 2] {
-    
     fn index_mut(&mut self, index: Piece) -> &mut Self::Output {
         match index {
             Piece::Black => &mut self[0],

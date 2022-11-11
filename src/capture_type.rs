@@ -15,7 +15,7 @@ impl fmt::Display for CaptureTypeError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CaptureType {
     Approach,
     Withdrawal,
