@@ -52,10 +52,10 @@ impl TryFrom<&str> for Move {
             (?P<capture_type>[fbFB])?
             |
             ^(?P<end_turn>[Xx])
-        ",
+            ",
         )?;
         let caps = re.captures(move_str).ok_or_else(|| {
-            FanoronaError::TryFromStrError(String::from("regex did not capture any groups"))
+            FanoronaError::TryFromStrError(String::from("Move regex did not capture any groups"))
         })?;
         match caps.name("end_turn") {
             Some(_) => Ok(Move::EndTurn),
@@ -95,5 +95,19 @@ impl TryFrom<&str> for Move {
                 })
             }
         }
+    }
+}
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        todo!()
+    }
+
+    fn test_try_from() {
+        todo!()
     }
 }

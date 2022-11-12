@@ -84,10 +84,35 @@ impl Direction {
     }
 }
 
-#[test]
-fn test_try_from() {
-    assert_eq!(Direction::North, Direction::try_from("N").unwrap());
-    assert_eq!(Direction::SouthEast, Direction::try_from("sE").unwrap());
-    assert_ne!(Direction::NorthWest, Direction::try_from("Sw").unwrap());
-    assert!(Direction::try_from("Sww").is_err());
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        todo!()
+    }
+
+    #[test]
+    fn test_try_from() {
+        assert_eq!(Direction::North, Direction::try_from("N").unwrap());
+        assert_eq!(Direction::SouthEast, Direction::try_from("sE").unwrap());
+        assert_ne!(Direction::NorthWest, Direction::try_from("Sw").unwrap());
+        assert!(Direction::try_from("Sww").is_err());
+    }
+
+    #[test]
+    fn test_into() {
+        todo!()
+    }
+
+    #[test]
+    fn test_idx() {
+        todo!()
+    }
+
+    #[test]
+    fn test_mirror() {
+        todo!()
+    }
 }

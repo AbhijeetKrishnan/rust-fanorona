@@ -114,3 +114,53 @@ impl Board {
         Ok(self.push(fmove))
     }
 }
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        todo!()
+    }
+
+    #[test]
+    fn test_try_from() {
+        todo!()
+    }
+
+    #[test]
+    fn test_new() {
+        todo!()
+    }
+
+    #[test]
+    fn test_pass_turn() {
+        todo!()
+    }
+
+    #[test]
+    fn test_in_capture_seq() {
+        todo!()
+    }
+
+    #[test]
+    fn test_push() {
+        todo!()
+    }
+
+    #[test]
+    fn test_is_capture() {
+        todo!()
+    }
+
+    #[test]
+    fn test_legal_move() {
+        todo!()
+    }
+
+    #[test]
+    fn test_push_str() {
+        todo!()
+    }
+}

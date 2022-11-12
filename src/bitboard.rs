@@ -94,6 +94,11 @@ mod tests {
         println!("Black:\n{}", BB_BLACK);
         println!("White:\n{}", BB_WHITE);
     }
+
+    #[test]
+    fn test_get_capture_mask() {
+        todo!()
+    }
 }
 
 pub const BB_EMPTY: BitBoard = BitBoard(0x0); // empty board

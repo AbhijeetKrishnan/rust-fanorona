@@ -134,3 +134,63 @@ impl Iterator for SquareIterator {
         result
     }
 }
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        todo!()
+    }
+
+    #[test]
+    fn test_from_u32() {
+        todo!()
+    }
+
+    #[test]
+    fn test_from_usize() {
+        todo!()
+    }
+
+    #[test]
+    fn test_from_tuple() {
+        todo!()
+    }
+
+    #[test]
+    fn test_into_usize() {
+        todo!()
+    }
+
+    #[test]
+    fn test_into_tuple() {
+        todo!()
+    }
+
+    #[test]
+    fn test_try_from() {
+        todo!()
+    }
+
+    #[test]
+    fn test_new() {
+        todo!()
+    }
+
+    #[test]
+    fn test_idx() {
+        todo!()
+    }
+
+    #[test]
+    fn test_translate() {
+        todo!()
+    }
+
+    #[test]
+    fn test_square_itr() {
+        todo!()
+    }
+}

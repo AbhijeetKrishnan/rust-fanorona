@@ -35,3 +35,24 @@ impl IndexMut<Piece> for [BitBoard; 2] {
         }
     }
 }
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_other_white() {
+        assert_eq!(Piece::Black, Piece.White.other());
+        assert_eq!(Piece::White, Piece::Black.other());
+    }
+
+    #[test]
+    fn test_index() {
+        todo!()
+    }
+
+    #[test]
+    fn test_index_mut() {
+        todo!()
+    }
+}

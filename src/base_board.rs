@@ -1,6 +1,8 @@
 use std::fmt;
 
-use crate::bitboard::{BitBoard, BB_BLACK, BB_POS, BB_WHITE, COLS, ROWS};
+use regex::Regex;
+
+use crate::bitboard::{BitBoard, BB_EMPTY, BB_POS, COLS, ROWS};
 use crate::FanoronaError;
 use crate::{CaptureType, Direction, Piece, Square};
 
@@ -32,15 +34,68 @@ impl fmt::Display for BaseBoard {
 impl TryFrom<&str> for BaseBoard {
     type Error = FanoronaError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        todo!()
+    fn try_from(board_str: &str) -> Result<Self, Self::Error> {
+        let re = Regex::new(
+            r"(?x)
+            ^(?P<r0>[WwBb1-9]+)/
+            (?P<r1>[WwBb1-9]+)/
+            (?P<r2>[WwBb1-9]+)/
+            (?P<r3>[WwBb1-9]+)/
+            (?P<r4>[WwBb1-9]+)
+            ",
+        )?;
+        let caps = re.captures(board_str).ok_or_else(|| {
+            FanoronaError::TryFromStrError(String::from(
+                "BaseBoard regex did not capture any groups",
+            ))
+        })?;
+        let mut rows = vec![String::new(); ROWS];
+        for row in 0..ROWS {
+            rows[row] = caps
+                .name(format!("r{}", row).as_str())
+                .ok_or_else(|| {
+                    FanoronaError::TryFromStrError(format!(
+                        "Row {} group was not captured",
+                        row + 1
+                    ))
+                })?
+                .as_str()
+                .to_string();
+        }
+        let mut base_board = BaseBoard::new();
+        for row in 0..ROWS {
+            let mut col: u32 = 0;
+            for c in rows[row].chars() {
+                match c {
+                    'w' | 'W' => {
+                        let piece = Piece::White;
+                        let at = Square::from((row, col as usize));
+                        base_board.set_piece_at(piece, at);
+                    }
+                    'b' | 'B' => {
+                        let piece = Piece::Black;
+                        let at = Square::from((row, col as usize));
+                        base_board.set_piece_at(piece, at);
+                    }
+                    '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                        col += char::to_digit(c, 10).ok_or_else(|| FanoronaError::TryFromStrError(String::from("could not parse number as valid sequence of contiguous empty spaces")))?;
+                    }
+                    _ => {
+                        return Err(FanoronaError::TryFromStrError(String::from(
+                            "got invalid character in board string",
+                        )));
+                    }
+                }
+            }
+        }
+        Ok(base_board)
     }
 }
 
 impl BaseBoard {
     pub fn new() -> BaseBoard {
         BaseBoard {
-            pieces: [BB_BLACK, BB_WHITE],
+            pieces: [BB_EMPTY, BB_EMPTY],
         }
     }
 
@@ -116,5 +171,52 @@ impl BaseBoard {
             }
         };
         opp_pieces &= !capture_mask;
+    }
+}
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        todo!()
+    }
+
+    #[test]
+    fn test_try_from() {
+        todo!()
+    }
+
+    fn test_new() {
+        todo!()
+    }
+
+    fn test_piece_at() {
+        todo!()
+    }
+
+    fn test_remove_piece_at() {
+        todo!()
+    }
+
+    fn test_set_piece_at() {
+        todo!()
+    }
+
+    fn test_make_paika() {
+        todo!()
+    }
+
+    fn test_capture_exists() {
+        todo!()
+    }
+
+    fn test_is_capture() {
+        todo!()
+    }
+
+    fn test_make_capture() {
+        todo!()
     }
 }
