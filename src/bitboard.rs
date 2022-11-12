@@ -1,5 +1,5 @@
 use crate::capture_type::CaptureType;
-use crate::{Direction, Piece};
+use crate::{Direction, FanoronaError, Piece};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
@@ -683,6 +683,34 @@ pub struct BaseBoard {
     pieces: [BitBoard; 2],
 }
 
+impl fmt::Display for BaseBoard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut board_chars = [['.'; COLS]; ROWS];
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                if self.pieces[Piece::White] & BB_POS[row * COLS + col] > 0 {
+                    board_chars[row][col] = 'W';
+                } else if self.pieces[Piece::Black] & BB_POS[row * COLS + col] > 0 {
+                    board_chars[row][col] = 'B';
+                }
+            }
+        }
+        write!(
+            f,
+            "{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
+            board_chars[4], board_chars[3], board_chars[2], board_chars[1], board_chars[0]
+        )
+    }
+}
+
+impl TryFrom<&str> for BaseBoard {
+    type Error = FanoronaError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
 impl BaseBoard {
     pub fn new() -> BaseBoard {
         BaseBoard {
@@ -762,25 +790,5 @@ impl BaseBoard {
             }
         };
         opp_pieces &= !capture_mask;
-    }
-}
-
-impl fmt::Display for BaseBoard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut board_chars = [['.'; COLS]; ROWS];
-        for row in 0..ROWS {
-            for col in 0..COLS {
-                if self.pieces[Piece::White] & BB_POS[row * COLS + col] > 0 {
-                    board_chars[row][col] = 'W';
-                } else if self.pieces[Piece::Black] & BB_POS[row * COLS + col] > 0 {
-                    board_chars[row][col] = 'B';
-                }
-            }
-        }
-        write!(
-            f,
-            "{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
-            board_chars[4], board_chars[3], board_chars[2], board_chars[1], board_chars[0]
-        )
     }
 }

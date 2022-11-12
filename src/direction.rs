@@ -1,3 +1,4 @@
+use crate::FanoronaError;
 use std::{fmt, string::String};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -10,21 +11,6 @@ pub enum Direction {
     NorthEast,
     SouthWest,
     SouthEast,
-}
-
-#[derive(Debug)]
-pub enum DirectionError {
-    TryFromStrError(String),
-}
-
-impl std::error::Error for DirectionError {}
-
-impl fmt::Display for DirectionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DirectionError::TryFromStrError(msg) => write!(f, "{}", msg),
-        }
-    }
 }
 
 impl fmt::Display for Direction {
@@ -50,9 +36,9 @@ impl Into<usize> for Direction {
 }
 
 impl TryFrom<&str> for Direction {
-    type Error = DirectionError;
+    type Error = FanoronaError;
 
-    fn try_from(dir_str: &str) -> Result<Direction, DirectionError> {
+    fn try_from(dir_str: &str) -> Result<Direction, FanoronaError> {
         match dir_str {
             "N" | "n" => Ok(Direction::North),
             "S" | "s" => Ok(Direction::South),
@@ -62,7 +48,7 @@ impl TryFrom<&str> for Direction {
             "NE" | "ne" | "nE" | "Ne" => Ok(Direction::NorthEast),
             "SW" | "sw" | "sW" | "Sw" => Ok(Direction::SouthWest),
             "SE" | "se" | "sE" | "Se" => Ok(Direction::SouthEast),
-            _ => Err(DirectionError::TryFromStrError(String::from(format!(
+            _ => Err(FanoronaError::TryFromStrError(String::from(format!(
                 "could not parse {} as direction",
                 dir_str
             )))),

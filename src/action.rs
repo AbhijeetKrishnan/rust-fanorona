@@ -1,53 +1,9 @@
 use std::fmt;
 use std::str;
 
-use crate::capture_type::CaptureTypeError;
-use crate::direction::DirectionError;
-use crate::square::SquareError;
-use crate::{CaptureType, Direction, Square};
+use crate::{CaptureType, Direction, FanoronaError, Square};
 
 use regex::Regex;
-
-#[derive(Debug)]
-pub enum MoveError {
-    TryFromStrError(String),
-    RegexError(regex::Error),
-}
-
-impl std::error::Error for MoveError {}
-
-impl From<regex::Error> for MoveError {
-    fn from(err: regex::Error) -> MoveError {
-        MoveError::RegexError(err)
-    }
-}
-
-impl From<SquareError> for MoveError {
-    fn from(err: SquareError) -> MoveError {
-        MoveError::TryFromStrError(err.to_string())
-    }
-}
-
-impl From<DirectionError> for MoveError {
-    fn from(err: DirectionError) -> MoveError {
-        MoveError::TryFromStrError(err.to_string())
-    }
-}
-
-impl From<CaptureTypeError> for MoveError {
-    fn from(err: CaptureTypeError) -> MoveError {
-        MoveError::TryFromStrError(err.to_string())
-    }
-}
-
-impl fmt::Display for MoveError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MoveError::TryFromStrError(msg) => write!(f, "{}", msg),
-            MoveError::RegexError(err) => write!(f, "{}", err.to_string()),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Move {
@@ -86,8 +42,9 @@ impl fmt::Display for Move {
 }
 
 impl TryFrom<&str> for Move {
-    type Error = MoveError;
-    fn try_from(move_str: &str) -> Result<Move, MoveError> {
+    type Error = FanoronaError;
+
+    fn try_from(move_str: &str) -> Result<Move, FanoronaError> {
         let re = Regex::new(
             r"(?x)
             ^(?P<from>[a-iA-I][1-5])
@@ -98,7 +55,7 @@ impl TryFrom<&str> for Move {
         ",
         )?;
         let caps = re.captures(move_str).ok_or_else(|| {
-            MoveError::TryFromStrError(String::from("regex did not capture any groups"))
+            FanoronaError::TryFromStrError(String::from("regex did not capture any groups"))
         })?;
         match caps.name("end_turn") {
             Some(_) => Ok(Move::EndTurn),
@@ -106,7 +63,7 @@ impl TryFrom<&str> for Move {
                 let from_str = caps
                     .name("from")
                     .ok_or_else(|| {
-                        MoveError::TryFromStrError(String::from("from group was not captured"))
+                        FanoronaError::TryFromStrError(String::from("from group was not captured"))
                     })?
                     .as_str();
                 let from = Square::try_from(from_str)?;
@@ -114,7 +71,9 @@ impl TryFrom<&str> for Move {
                 let dir_str = caps
                     .name("direction")
                     .ok_or_else(|| {
-                        MoveError::TryFromStrError(String::from("direction group was not captured"))
+                        FanoronaError::TryFromStrError(String::from(
+                            "direction group was not captured",
+                        ))
                     })?
                     .as_str();
                 let direction = Direction::try_from(dir_str)?;

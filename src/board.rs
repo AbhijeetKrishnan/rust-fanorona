@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{bitboard, BaseBoard, Move, MoveError, Piece};
+use crate::{bitboard, BaseBoard, FanoronaError, Move, Piece};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
@@ -13,6 +13,14 @@ pub struct Board {
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.base_board.to_string())
+    }
+}
+
+impl TryFrom<&str> for Board {
+    type Error = FanoronaError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        todo!()
     }
 }
 
@@ -31,8 +39,16 @@ impl Board {
     }
 
     fn in_capture_seq(&self) -> bool {
-        if let Some(Move::Move { from: _, direction: _, capture_type: _ }) = self.last_capture { true }
-        else { false }
+        if let Some(Move::Move {
+            from: _,
+            direction: _,
+            capture_type: _,
+        }) = self.last_capture
+        {
+            true
+        } else {
+            false
+        }
     }
 
     pub fn push(&mut self, fmove: Move) {
@@ -92,7 +108,7 @@ impl Board {
         }
     }
 
-    pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), MoveError> {
+    pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), FanoronaError> {
         let fmove = Move::try_from(fmove_str)?;
         println!("{:?}", fmove);
         Ok(self.push(fmove))

@@ -1,21 +1,7 @@
 use std::{fmt, string::String};
 
 use crate::direction::Direction;
-
-#[derive(Debug)]
-pub enum SquareError {
-    TryFromStrError(String),
-}
-
-impl std::error::Error for SquareError {}
-
-impl fmt::Display for SquareError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            SquareError::TryFromStrError(msg) => write!(f, "{}", msg),
-        }
-    }
-}
+use crate::FanoronaError;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Square(usize);
@@ -71,33 +57,33 @@ impl Into<(usize, usize)> for Square {
 }
 
 impl TryFrom<&str> for Square {
-    type Error = SquareError;
-    fn try_from(square_str: &str) -> Result<Square, SquareError> {
+    type Error = FanoronaError;
+
+    fn try_from(square_str: &str) -> Result<Square, FanoronaError> {
         let row = square_str
             .chars()
             .nth(1)
-            .ok_or_else(|| SquareError::TryFromStrError(String::from("row char does not exist")))?
+            .ok_or_else(|| FanoronaError::TryFromStrError(String::from("row char does not exist")))?
             .to_digit(10)
             .ok_or_else(|| {
-                SquareError::TryFromStrError(String::from("could not convert row to number"))
+                FanoronaError::TryFromStrError(String::from("could not convert row to number"))
             })? as usize;
-        let col =
-            match square_str.chars().nth(0).ok_or_else(|| {
-                SquareError::TryFromStrError(String::from("col char does not exist"))
-            })? {
-                'a' | 'A' => Ok(0usize),
-                'b' | 'B' => Ok(1usize),
-                'c' | 'C' => Ok(2usize),
-                'd' | 'D' => Ok(3usize),
-                'e' | 'E' => Ok(4usize),
-                'f' | 'F' => Ok(5usize),
-                'g' | 'G' => Ok(6usize),
-                'h' | 'H' => Ok(7usize),
-                'i' | 'I' => Ok(8usize),
-                _ => Err(SquareError::TryFromStrError(String::from(
-                    "could not convert col to number",
-                ))),
-            }?;
+        let col = match square_str.chars().nth(0).ok_or_else(|| {
+            FanoronaError::TryFromStrError(String::from("col char does not exist"))
+        })? {
+            'a' | 'A' => Ok(0usize),
+            'b' | 'B' => Ok(1usize),
+            'c' | 'C' => Ok(2usize),
+            'd' | 'D' => Ok(3usize),
+            'e' | 'E' => Ok(4usize),
+            'f' | 'F' => Ok(5usize),
+            'g' | 'G' => Ok(6usize),
+            'h' | 'H' => Ok(7usize),
+            'i' | 'I' => Ok(8usize),
+            _ => Err(FanoronaError::TryFromStrError(String::from(
+                "could not convert col to number",
+            ))),
+        }?;
         Ok(Square::from((row, col)))
     }
 }
