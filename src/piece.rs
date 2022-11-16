@@ -1,7 +1,7 @@
 use crate::bitboard::BitBoard;
 use std::ops::{Index, IndexMut};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Piece {
     Black,
     White,
@@ -36,23 +36,31 @@ impl IndexMut<Piece> for [BitBoard; 2] {
     }
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
+    use crate::bitboard::{BB_BLACK, BB_WHITE};
+
     use super::*;
 
     #[test]
     fn test_other_white() {
-        assert_eq!(Piece::Black, Piece.White.other());
+        assert_eq!(Piece::Black, Piece::White.other());
         assert_eq!(Piece::White, Piece::Black.other());
     }
 
     #[test]
     fn test_index() {
-        todo!()
+        let bb = [BB_BLACK, BB_WHITE];
+        let piece = Piece::White;
+        assert_eq!(BB_WHITE, bb[piece]);
+        assert_eq!(BB_BLACK, bb[piece.other()]);
     }
 
     #[test]
     fn test_index_mut() {
-        todo!()
+        let mut bb = [BB_BLACK, BB_WHITE];
+        let piece = Piece::Black;
+        assert_eq!(BB_BLACK, bb[piece]);
+        assert_eq!(BB_WHITE, bb[piece.other()]);
     }
 }

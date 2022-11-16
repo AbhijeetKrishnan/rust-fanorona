@@ -98,16 +98,31 @@ impl TryFrom<&str> for Move {
     }
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_display() {
-        todo!()
+        let action: Move = Move::Move {
+            from: Square::new(0),
+            direction: Direction::North,
+            capture_type: None,
+        };
+        assert_eq!("A1N", format!("{}", action));
+
+        let end_turn: Move = Move::EndTurn;
+        assert_eq!("X", format!("{}", end_turn));
     }
 
+    #[test]
     fn test_try_from() {
-        todo!()
+        let move_str = "A1N";
+        let action = Move::Move {
+            from: Square::new(0),
+            direction: Direction::North,
+            capture_type: None,
+        };
+        assert_eq!(action, Move::try_from(move_str).unwrap())
     }
 }

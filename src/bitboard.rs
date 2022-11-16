@@ -9,7 +9,7 @@ pub const UNUSED: usize = 19;
 pub const ROWS: usize = 5;
 pub const COLS: usize = 9;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct BitBoard(u64);
 
 impl_op_ex!(!|bb: &BitBoard| -> BitBoard { BitBoard(!bb.0) });
@@ -56,8 +56,8 @@ impl PartialOrd<u64> for BitBoard {
 
 impl BitBoard {
     #[inline]
-    const fn ray(square: Square, direction: Direction) -> BitBoard {
-        BB_RAY[square.idx()][direction.idx()]
+    fn ray(square: Square, direction: Direction) -> BitBoard {
+        BB_RAY[square][direction]
     }
 
     #[inline]
@@ -85,7 +85,7 @@ mod tests {
         assert_eq!(64, 0x0u64.trailing_zeros());
         assert_eq!(0, 0x1u64.trailing_zeros());
         for square in SquareIterator::new(0) {
-            assert_eq!(square, BB_POS[square.idx()].msb());
+            assert_eq!(square, BB_POS[square].msb());
         }
     }
 

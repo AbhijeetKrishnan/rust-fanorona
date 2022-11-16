@@ -6,12 +6,12 @@ use crate::bitboard::{BitBoard, BB_EMPTY, BB_POS, COLS, ROWS};
 use crate::FanoronaError;
 use crate::{CaptureType, Direction, Piece, Square};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct BaseBoard {
     pieces: [BitBoard; 2],
 }
 
-impl fmt::Display for BaseBoard {
+impl fmt::Debug for BaseBoard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut board_chars = [['.'; COLS]; ROWS];
         for row in 0..ROWS {
@@ -28,6 +28,12 @@ impl fmt::Display for BaseBoard {
             "{:?}\n{:?}\n{:?}\n{:?}\n{:?}",
             board_chars[4], board_chars[3], board_chars[2], board_chars[1], board_chars[0]
         )
+    }
+}
+
+impl fmt::Display for BaseBoard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!()
     }
 }
 
@@ -78,7 +84,10 @@ impl TryFrom<&str> for BaseBoard {
                         base_board.set_piece_at(piece, at);
                     }
                     '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                        col += char::to_digit(c, 10).ok_or_else(|| FanoronaError::TryFromStrError(String::from("could not parse number as valid sequence of contiguous empty spaces")))?;
+                        col += char::to_digit(c, 10).ok_or_else(|| {
+                            FanoronaError::TryFromStrError(String::from(
+                                "could not parse number as valid sequence of contiguous empty spaces",
+                        ))})?;
                     }
                     _ => {
                         return Err(FanoronaError::TryFromStrError(String::from(
@@ -100,9 +109,9 @@ impl BaseBoard {
     }
 
     pub fn piece_at(&self, at: Square) -> Option<Piece> {
-        if self.pieces[Piece::White] & !BB_POS[at.idx()] > 0 {
+        if self.pieces[Piece::White] & !BB_POS[at] > 0 {
             Some(Piece::White)
-        } else if self.pieces[Piece::Black] & !BB_POS[at.idx()] > 0 {
+        } else if self.pieces[Piece::Black] & !BB_POS[at] > 0 {
             Some(Piece::Black)
         } else {
             None
@@ -111,13 +120,13 @@ impl BaseBoard {
 
     pub fn remove_piece_from(&mut self, at: Square) -> Option<Piece> {
         let piece = self.piece_at(at);
-        self.pieces[Piece::Black] &= !BB_POS[at.idx()];
-        self.pieces[Piece::White] &= !BB_POS[at.idx()];
+        self.pieces[Piece::Black] &= !BB_POS[at];
+        self.pieces[Piece::White] &= !BB_POS[at];
         piece
     }
 
     pub fn set_piece_at(&mut self, piece: Piece, at: Square) {
-        self.pieces[piece] |= BB_POS[at.idx()]
+        self.pieces[piece] |= BB_POS[at]
     }
 
     pub fn make_paika(&mut self, from: Square, direction: Direction) {
@@ -174,7 +183,7 @@ impl BaseBoard {
     }
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
     use super::*;
 

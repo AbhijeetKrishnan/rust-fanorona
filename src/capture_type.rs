@@ -30,3 +30,21 @@ impl TryFrom<&str> for CaptureType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        assert_eq!("F", CaptureType::Approach.to_string());
+        assert_eq!("B", CaptureType::Withdrawal.to_string());
+    }
+
+    #[test]
+    fn test_try_from() {
+        assert_eq!(CaptureType::Approach, CaptureType::try_from("f").unwrap());
+        assert_eq!(CaptureType::Withdrawal, CaptureType::try_from("B").unwrap());
+        assert!(CaptureType::try_from("x").is_err());
+    }
+}

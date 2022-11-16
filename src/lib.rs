@@ -4,7 +4,6 @@ extern crate regex;
 extern crate impl_ops;
 
 mod bitboard;
-use bitboard::BitBoard;
 
 mod base_board;
 use base_board::BaseBoard;

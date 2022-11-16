@@ -64,7 +64,7 @@ impl Board {
                 capture_type,
             } => {
                 self.last_capture = Some(fmove);
-                self.visited |= bitboard::BB_POS[from.idx()];
+                self.visited |= bitboard::BB_POS[from];
                 self.base_board.make_capture(from, direction, capture_type);
             }
         }
@@ -88,7 +88,7 @@ impl Board {
                 }) = self.last_capture
                 {
                     from == lc_from
-                        && bitboard::BB_POS[from.translate(direction).idx()] & self.visited == 0
+                        && bitboard::BB_POS[from.translate(direction)] & self.visited == 0
                         && direction != lc_dir
                 } else if !self.base_board.is_capture(from, direction, capture_type) {
                     !self.base_board.capture_exists() // if paika is played, possible capture must not exist
@@ -115,7 +115,7 @@ impl Board {
     }
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
     use super::*;
 

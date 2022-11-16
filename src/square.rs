@@ -1,5 +1,7 @@
+use std::ops::Index;
 use std::{fmt, string::String};
 
+use crate::bitboard::{BitBoard, COLS, ROWS};
 use crate::direction::Direction;
 use crate::FanoronaError;
 
@@ -9,7 +11,7 @@ pub struct Square(usize);
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let (row, col): (usize, usize) = (*self).into();
-        let row_str = row.to_string();
+        let row_str = (row + 1).to_string();
         let col_str = match col {
             0usize => Ok('A'),
             1usize => Ok('B'),
@@ -22,13 +24,7 @@ impl fmt::Display for Square {
             8usize => Ok('I'),
             _ => Err(fmt::Error),
         }?;
-        write!(f, "{}{}", row_str, col_str)
-    }
-}
-
-impl From<u32> for Square {
-    fn from(sq: u32) -> Self {
-        Square(sq as usize)
+        write!(f, "{}{}", col_str, row_str)
     }
 }
 
@@ -40,19 +36,29 @@ impl From<usize> for Square {
 
 impl From<(usize, usize)> for Square {
     fn from(move_tuple: (usize, usize)) -> Square {
-        Square(move_tuple.0 * 9 + move_tuple.1)
-    }
-}
-
-impl Into<usize> for Square {
-    fn into(self) -> usize {
-        self.0
+        Square(move_tuple.0 * COLS + move_tuple.1)
     }
 }
 
 impl Into<(usize, usize)> for Square {
     fn into(self) -> (usize, usize) {
-        (self.0 / 9, self.0 % 9)
+        (self.0 / COLS, self.0 % COLS)
+    }
+}
+
+impl Index<Square> for [BitBoard; ROWS * COLS] {
+    type Output = BitBoard;
+
+    fn index(&self, index: Square) -> &Self::Output {
+        &self[index.0]
+    }
+}
+
+impl Index<Square> for [[BitBoard; 8]; ROWS * COLS] {
+    type Output = [BitBoard; 8];
+
+    fn index(&self, index: Square) -> &Self::Output {
+        &self[index.0]
     }
 }
 
@@ -67,7 +73,8 @@ impl TryFrom<&str> for Square {
             .to_digit(10)
             .ok_or_else(|| {
                 FanoronaError::TryFromStrError(String::from("could not convert row to number"))
-            })? as usize;
+            })? as usize
+            - 1;
         let col = match square_str.chars().nth(0).ok_or_else(|| {
             FanoronaError::TryFromStrError(String::from("col char does not exist"))
         })? {
@@ -91,11 +98,6 @@ impl TryFrom<&str> for Square {
 impl Square {
     pub const fn new(sq: usize) -> Square {
         Square(sq)
-    }
-
-    #[inline]
-    pub const fn idx(&self) -> usize {
-        self.0
     }
 
     #[inline]
@@ -125,7 +127,7 @@ impl Iterator for SquareIterator {
     type Item = Square;
     fn next(&mut self) -> Option<Self::Item> {
         let result: Option<Square>;
-        if self.0 < 45 {
+        if self.0 < ROWS * COLS {
             result = Some(Square(self.0));
             self.0 += 1;
         } else {
@@ -135,18 +137,21 @@ impl Iterator for SquareIterator {
     }
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_display() {
-        todo!()
+        assert_eq!("A1", Square(0).to_string());
+        assert_eq!("I5", Square(44).to_string());
     }
 
     #[test]
     fn test_from_u32() {
-        todo!()
+        assert_eq!(Square(0), Square::from(0usize));
+        assert_eq!(Square(33), Square::from(33usize));
+        assert_eq!(Square(500), Square::from(500usize));
     }
 
     #[test]
@@ -160,27 +165,18 @@ mod tests {
     }
 
     #[test]
-    fn test_into_usize() {
-        todo!()
-    }
-
-    #[test]
     fn test_into_tuple() {
         todo!()
     }
 
     #[test]
     fn test_try_from() {
-        todo!()
+        assert_eq!(Square(0), Square::try_from("A1").unwrap());
+        assert!(Square::try_from("X1").is_err());
     }
 
     #[test]
     fn test_new() {
-        todo!()
-    }
-
-    #[test]
-    fn test_idx() {
         todo!()
     }
 

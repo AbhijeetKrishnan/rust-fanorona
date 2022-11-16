@@ -1,5 +1,5 @@
-use crate::FanoronaError;
-use std::{fmt, string::String};
+use crate::{bitboard::BitBoard, FanoronaError};
+use std::{fmt, ops::Index, string::String};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
@@ -31,7 +31,16 @@ impl fmt::Display for Direction {
 
 impl Into<usize> for Direction {
     fn into(self) -> usize {
-        self.idx()
+        match self {
+            Direction::North => 0usize,
+            Direction::NorthEast => 1usize,
+            Direction::East => 2usize,
+            Direction::SouthEast => 3usize,
+            Direction::South => 4usize,
+            Direction::SouthWest => 5usize,
+            Direction::West => 6usize,
+            Direction::NorthWest => 7usize,
+        }
     }
 }
 
@@ -56,20 +65,15 @@ impl TryFrom<&str> for Direction {
     }
 }
 
-impl Direction {
-    pub const fn idx(&self) -> usize {
-        match self {
-            Direction::North => 0usize,
-            Direction::NorthEast => 1usize,
-            Direction::East => 2usize,
-            Direction::SouthEast => 3usize,
-            Direction::South => 4usize,
-            Direction::SouthWest => 5usize,
-            Direction::West => 6usize,
-            Direction::NorthWest => 7usize,
-        }
-    }
+impl Index<Direction> for [BitBoard; 8] {
+    type Output = BitBoard;
 
+    fn index(&self, index: Direction) -> &Self::Output {
+        &self[<Direction as Into<usize>>::into(index)]
+    }
+}
+
+impl Direction {
     pub const fn mirror(self) -> Direction {
         match self {
             Direction::North => Direction::South,
@@ -84,13 +88,16 @@ impl Direction {
     }
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
+    use crate::bitboard::BB_RAY;
+
     use super::*;
 
     #[test]
     fn test_display() {
-        todo!()
+        let dir = Direction::North;
+        assert_eq!("N", dir.to_string());
     }
 
     #[test]
@@ -103,16 +110,19 @@ mod tests {
 
     #[test]
     fn test_into() {
-        todo!()
+        let dir = Direction::North;
+        assert_eq!(0usize, dir.into());
     }
 
     #[test]
-    fn test_idx() {
-        todo!()
+    fn test_index() {
+        let dir = Direction::North;
+        assert_eq!(BB_RAY[0][0], BB_RAY[0][dir]);
     }
 
     #[test]
     fn test_mirror() {
-        todo!()
+        let dir = Direction::North;
+        assert_eq!(Direction::South, dir.mirror());
     }
 }
