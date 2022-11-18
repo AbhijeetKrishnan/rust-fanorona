@@ -39,15 +39,15 @@ impl fmt::Display for BaseBoard {
             for col in 0..COLS {
                 let white_bit = self.pieces[Piece::White] >> (row * COLS + col) & 1;
                 let black_bit = self.pieces[Piece::Black] >> (row * COLS + col) & 1;
-                if white_bit & black_bit == 0 {
+                if white_bit | black_bit == 1 {
                     if spaces > 0 {
-                        let spaces_char = char::from_u32(spaces).ok_or_else(|| fmt::Error)?;
+                        let spaces_char = char::from_digit(spaces, 10).ok_or_else(|| fmt::Error)?;
                         bb_str.push(spaces_char);
                     }
                     spaces = 0;
                     if white_bit == 1 {
                         bb_str.push('W');
-                    } else {
+                    } else if black_bit == 1 {
                         bb_str.push('B');
                     }
                 } else {
@@ -55,7 +55,7 @@ impl fmt::Display for BaseBoard {
                 }
             }
             if spaces > 0 {
-                let spaces_char = char::from_u32(spaces).ok_or_else(|| fmt::Error)?;
+                let spaces_char = char::from_digit(spaces, 10).ok_or_else(|| fmt::Error)?;
                 bb_str.push(spaces_char);
             }
             spaces = 0;
@@ -214,11 +214,20 @@ impl BaseBoard {
 
 #[cfg(test)]
 mod tests {
+    use crate::bitboard::{BB_BLACK, BB_WHITE};
+
     use super::*;
 
     #[test]
     fn test_display() {
-        todo!()
+        assert_eq!("9/9/9/9/9", BaseBoard::new().to_string());
+        assert_eq!(
+            "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB",
+            BaseBoard {
+                pieces: [BB_BLACK, BB_WHITE]
+            }
+            .to_string()
+        );
     }
 
     #[test]
