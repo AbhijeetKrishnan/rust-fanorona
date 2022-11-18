@@ -33,7 +33,36 @@ impl fmt::Debug for BaseBoard {
 
 impl fmt::Display for BaseBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+        let mut bb_str = String::new();
+        let mut spaces: u32 = 0;
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let white_bit = self.pieces[Piece::White] >> (row * COLS + col) & 1;
+                let black_bit = self.pieces[Piece::Black] >> (row * COLS + col) & 1;
+                if white_bit & black_bit == 0 {
+                    if spaces > 0 {
+                        let spaces_char = char::from_u32(spaces).ok_or_else(|| fmt::Error)?;
+                        bb_str.push(spaces_char);
+                    }
+                    spaces = 0;
+                    if white_bit == 1 {
+                        bb_str.push('W');
+                    } else {
+                        bb_str.push('B');
+                    }
+                } else {
+                    spaces += 1;
+                }
+            }
+            if spaces > 0 {
+                let spaces_char = char::from_u32(spaces).ok_or_else(|| fmt::Error)?;
+                bb_str.push(spaces_char);
+            }
+            spaces = 0;
+            bb_str.push('/');
+        }
+        bb_str.pop(); // remove trailing '/'
+        write!(f, "{}", bb_str)
     }
 }
 
