@@ -96,42 +96,41 @@ impl TryFrom<&str> for Square {
 }
 
 impl Square {
-    pub const fn new(sq: usize) -> Square {
-        Square(sq)
+    pub fn new(sq: usize) -> Result<Square, FanoronaError> {
+        if sq < ROWS * COLS {
+            Ok(Square(sq))
+        } else {
+            Err(FanoronaError::SquareOutOfBoundsError(String::from(
+                "Square at {} is out of bounds",
+            )))
+        }
     }
 
     #[inline]
-    pub const fn translate(self, direction: Direction) -> Square {
-        match direction {
-            Direction::North => Square(self.0 + 9),
-            Direction::NorthEast => Square(self.0 + 10),
-            Direction::East => Square(self.0 + 1),
-            Direction::SouthEast => Square(self.0 - 8),
-            Direction::South => Square(self.0 - 9),
-            Direction::SouthWest => Square(self.0 - 10),
-            Direction::West => Square(self.0 - 1),
-            Direction::NorthWest => Square(self.0 + 8),
+    pub const fn translate(self, direction: Direction) -> Option<Square> {
+        let final_pos = (self.0 as i8) + direction.to_increment();
+        if final_pos < 0 || (final_pos as usize) > ROWS * COLS {
+            None
+        } else {
+            Some(Square(final_pos as usize))
         }
     }
 }
 
-pub struct SquareIterator(usize);
+pub struct SquareIterator(Square, Direction);
 
 impl SquareIterator {
-    pub fn new(start: usize) -> Self {
-        SquareIterator(start)
+    pub fn new(start: Square, dir: Direction) -> Self {
+        SquareIterator(start, dir)
     }
 }
 
 impl Iterator for SquareIterator {
     type Item = Square;
     fn next(&mut self) -> Option<Self::Item> {
-        let result: Option<Square>;
-        if self.0 < ROWS * COLS {
-            result = Some(Square(self.0));
-            self.0 += 1;
-        } else {
-            result = None;
+        let result = self.0.translate(self.1);
+        if let Some(square) = result {
+            self.0 = square;
         }
         result
     }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{bitboard, BaseBoard, FanoronaError, Move, Piece};
+use crate::{base_board::IsCaptureReason, bitboard, BaseBoard, FanoronaError, Move, Piece};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
@@ -51,12 +51,13 @@ impl Board {
         }
     }
 
-    pub fn push(&mut self, fmove: Move) {
+    pub fn push(&mut self, fmove: Move) -> Result<(), FanoronaError> {
         match fmove {
             Move::EndTurn => {
                 self.visited &= bitboard::BB_EMPTY;
                 self.last_capture = None;
                 self.pass_turn();
+                Ok(())
             }
             Move::Move {
                 from,
@@ -65,13 +66,20 @@ impl Board {
             } => {
                 self.last_capture = Some(fmove);
                 self.visited |= bitboard::BB_POS[from];
-                self.base_board.make_capture(from, direction, capture_type);
+                self.base_board.make_capture(from, direction, capture_type)
             }
         }
     }
 
-    pub fn is_capture(&self, fmove: Move) -> bool {
-        todo!()
+    pub fn is_capture(&self, fmove: Move) -> Result<(), IsCaptureReason> {
+        match fmove {
+            Move::Move {
+                from,
+                direction,
+                capture_type,
+            } => self.base_board.is_capture(from, direction, capture_type),
+            Move::EndTurn => Err(IsCaptureReason::EndTurnMove),
+        }
     }
 
     pub fn legal_move(&self, fmove: Move) -> bool {
@@ -87,17 +95,27 @@ impl Board {
                     capture_type: _,
                 }) = self.last_capture
                 {
-                    from == lc_from
-                        && bitboard::BB_POS[from.translate(direction)] & self.visited == 0
-                        && direction != lc_dir
-                } else if !self.base_board.is_capture(from, direction, capture_type) {
+                    let to_opt = from.translate(direction);
+                    if let Some(to) = to_opt {
+                        from == lc_from
+                            && bitboard::BB_POS[to] & self.visited == 0
+                            && direction != lc_dir
+                    } else {
+                        false
+                    }
+                } else if !self
+                    .base_board
+                    .is_capture(from, direction, capture_type)
+                    .is_ok()
+                {
                     !self.base_board.capture_exists() // if paika is played, possible capture must not exist
                 } else {
                     // if capture type is not provided, capture must be unambiguous
                     !(capture_type.is_none()
                         && self
                             .base_board
-                            .is_capture(from, direction.mirror(), capture_type))
+                            .is_capture(from, direction.mirror(), capture_type)
+                            .is_ok())
                 }
             }
             Move::EndTurn => {
@@ -111,7 +129,7 @@ impl Board {
     pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), FanoronaError> {
         let fmove = Move::try_from(fmove_str)?;
         println!("{:?}", fmove);
-        Ok(self.push(fmove))
+        self.push(fmove)
     }
 }
 

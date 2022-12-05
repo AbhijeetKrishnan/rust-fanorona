@@ -31,6 +31,8 @@ use std::fmt;
 #[derive(Debug)]
 pub enum FanoronaError {
     TryFromStrError(String),
+    MoveError(String),
+    SquareOutOfBoundsError(String),
     RegexError(regex::Error),
 }
 
@@ -45,7 +47,9 @@ impl From<regex::Error> for FanoronaError {
 impl fmt::Display for FanoronaError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FanoronaError::TryFromStrError(msg) => write!(f, "{}", msg),
+            FanoronaError::TryFromStrError(msg)
+            | FanoronaError::MoveError(msg)
+            | FanoronaError::SquareOutOfBoundsError(msg) => write!(f, "{}", msg),
             FanoronaError::RegexError(err) => write!(f, "{}", err.to_string()),
         }
     }

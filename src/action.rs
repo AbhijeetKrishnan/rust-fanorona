@@ -105,7 +105,7 @@ mod tests {
     #[test]
     fn test_display() {
         let action: Move = Move::Move {
-            from: Square::new(0),
+            from: Square::new(0).unwrap(),
             direction: Direction::North,
             capture_type: None,
         };
@@ -119,7 +119,7 @@ mod tests {
     fn test_try_from() {
         let move_str = "A1N";
         let action = Move::Move {
-            from: Square::new(0),
+            from: Square::new(0).unwrap(),
             direction: Direction::North,
             capture_type: None,
         };

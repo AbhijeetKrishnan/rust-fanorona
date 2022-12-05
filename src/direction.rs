@@ -86,6 +86,19 @@ impl Direction {
             Direction::NorthWest => Direction::SouthEast,
         }
     }
+
+    pub const fn to_increment(self) -> i8 {
+        match self {
+            Direction::North => 9,
+            Direction::NorthEast => 10,
+            Direction::East => 1,
+            Direction::SouthEast => -8,
+            Direction::South => -9,
+            Direction::SouthWest => -10,
+            Direction::West => -1,
+            Direction::NorthWest => 8,
+        }
+    }
 }
 
 #[cfg(test)]

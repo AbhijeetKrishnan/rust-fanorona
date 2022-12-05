@@ -6,6 +6,43 @@ use crate::bitboard::{BitBoard, BB_EMPTY, BB_POS, COLS, ROWS};
 use crate::FanoronaError;
 use crate::{CaptureType, Direction, Piece, Square};
 
+#[derive(Debug)]
+pub enum IsCaptureReason {
+    FromEmpty,
+    SquareOutOfBounds,
+    CaptureOutOfBounds,
+    CaptureEmpty,
+    SelfPieceOnCaptureSquare,
+    AmbiguousCapture,
+    EndTurnMove,
+}
+
+impl std::error::Error for IsCaptureReason {}
+
+impl fmt::Display for IsCaptureReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            IsCaptureReason::FromEmpty => write!(f, "{}", "From square is empty"),
+            IsCaptureReason::SquareOutOfBounds => write!(f, "{}", "To square is out of bounds"),
+            IsCaptureReason::CaptureOutOfBounds => {
+                write!(f, "{}", "Capture square is out of bounds")
+            }
+            IsCaptureReason::CaptureEmpty => {
+                write!(f, "{}", "Capture square is empty (paika move)")
+            }
+            IsCaptureReason::SelfPieceOnCaptureSquare => {
+                write!(f, "{}", "Own piece on capture square")
+            }
+            IsCaptureReason::AmbiguousCapture => write!(
+                f,
+                "{}",
+                "Approach and withdrawal captures possible without clarification"
+            ),
+            IsCaptureReason::EndTurnMove => write!(f, "{}", "End turn move cannot be a capture"),
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct BaseBoard {
     pieces: [BitBoard; 2],
@@ -158,17 +195,67 @@ impl BaseBoard {
         self.pieces[piece] |= BB_POS[at]
     }
 
-    pub fn make_paika(&mut self, from: Square, direction: Direction) {
-        let piece = self.remove_piece_from(from);
-        let to = from.translate(direction);
-        match piece {
-            Some(piece) => self.set_piece_at(piece, to),
-            None => (),
-        };
+    pub fn make_paika(&mut self, from: Square, direction: Direction) -> Result<(), FanoronaError> {
+        let piece = self
+            .remove_piece_from(from)
+            .ok_or(FanoronaError::MoveError(String::from(format!(
+                "Piece does not exist at {}",
+                from.to_string()
+            ))))?;
+        let to = from
+            .translate(direction)
+            .ok_or(FanoronaError::MoveError(String::from(
+                "Move was out of bounds",
+            )))?;
+        self.set_piece_at(piece, to);
+        Ok(())
     }
 
     pub fn capture_exists(&self) -> bool {
+        // check all possible moves for any side and see if move is a capture (is_capture)
+        // needs a pseudo-legal move generator
         todo!()
+    }
+
+    pub fn is_approach_capture(
+        &self,
+        from: Square,
+        direction: Direction,
+    ) -> Result<(), IsCaptureReason> {
+        let moved_piece = self.piece_at(from).ok_or(IsCaptureReason::FromEmpty)?;
+        let to = from
+            .translate(direction)
+            .ok_or(IsCaptureReason::SquareOutOfBounds)?;
+        let approach_sq = to
+            .translate(direction)
+            .ok_or(IsCaptureReason::CaptureOutOfBounds)?;
+        let piece = self
+            .piece_at(approach_sq)
+            .ok_or(IsCaptureReason::CaptureEmpty)?;
+        if piece == moved_piece {
+            Err(IsCaptureReason::SelfPieceOnCaptureSquare)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn is_withdraw_capture(
+        &self,
+        from: Square,
+        direction: Direction,
+    ) -> Result<(), IsCaptureReason> {
+        let moved_piece = self.piece_at(from).ok_or(IsCaptureReason::FromEmpty)?;
+        let withdraw_sq = from
+            .translate(direction.mirror())
+            .ok_or(IsCaptureReason::CaptureOutOfBounds)?;
+        let piece = self
+            .piece_at(withdraw_sq)
+            .ok_or(IsCaptureReason::CaptureEmpty)?;
+        if piece == moved_piece {
+            Err(IsCaptureReason::SelfPieceOnCaptureSquare)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn is_capture(
@@ -176,8 +263,22 @@ impl BaseBoard {
         from: Square,
         direction: Direction,
         capture_type: Option<CaptureType>,
-    ) -> bool {
-        todo!()
+    ) -> Result<(), IsCaptureReason> {
+        match capture_type {
+            Some(CaptureType::Approach) => self.is_approach_capture(from, direction),
+            Some(CaptureType::Withdrawal) => self.is_withdraw_capture(from, direction),
+            None => {
+                let approach = self.is_approach_capture(from, direction);
+                let withdraw = self.is_withdraw_capture(from, direction);
+                if approach.is_ok() && withdraw.is_err() {
+                    Err(IsCaptureReason::AmbiguousCapture)
+                } else if approach.is_err() {
+                    withdraw
+                } else {
+                    approach
+                }
+            }
+        }
     }
 
     pub fn make_capture(
@@ -185,30 +286,40 @@ impl BaseBoard {
         from: Square,
         direction: Direction,
         capture_type: Option<CaptureType>,
-    ) {
-        let moved_piece = self.piece_at(from).unwrap();
-        self.make_paika(from, direction);
+    ) -> Result<(), FanoronaError> {
+        let moved_piece = self
+            .piece_at(from)
+            .ok_or(FanoronaError::MoveError(String::from(format!(
+                "From square {} is empty",
+                from.to_string()
+            ))))?;
+        self.make_paika(from, direction)?;
 
         let mut opp_pieces = self.pieces[moved_piece.other()];
         let capture_mask = match capture_type {
             Some(CaptureType::Approach) => {
-                BitBoard::get_capture_mask(opp_pieces, from.translate(direction), direction)
+                let ray_start =
+                    from.translate(direction)
+                        .ok_or(FanoronaError::MoveError(String::from(format!(
+                            "Move is out of bounds"
+                        ))))?;
+                BitBoard::get_capture_mask(opp_pieces, ray_start, direction)
             }
-            Some(CaptureType::Withdrawal) => BitBoard::get_capture_mask(
-                opp_pieces,
-                from.translate(direction.mirror()),
-                direction.mirror(),
-            ),
+            Some(CaptureType::Withdrawal) => {
+                BitBoard::get_capture_mask(opp_pieces, from, direction.mirror())
+            }
             None => {
-                BitBoard::get_capture_mask(opp_pieces, from.translate(direction), direction)
-                    | BitBoard::get_capture_mask(
-                        opp_pieces,
-                        from.translate(direction.mirror()),
-                        direction.mirror(),
-                    )
+                let ray_start =
+                    from.translate(direction)
+                        .ok_or(FanoronaError::MoveError(String::from(format!(
+                            "Move is out of bounds"
+                        ))))?;
+                BitBoard::get_capture_mask(opp_pieces, ray_start, direction)
+                    | BitBoard::get_capture_mask(opp_pieces, from, direction.mirror())
             }
         };
         opp_pieces &= !capture_mask;
+        Ok(())
     }
 }
 

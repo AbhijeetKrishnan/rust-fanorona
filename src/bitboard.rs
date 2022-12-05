@@ -1,3 +1,4 @@
+use crate::square::SquareIterator;
 use crate::Direction;
 use std::cmp::Ordering;
 use std::fmt;
@@ -59,13 +60,13 @@ impl PartialOrd<u64> for BitBoard {
 
 impl BitBoard {
     #[inline]
-    fn ray(square: Square, direction: Direction) -> BitBoard {
+    pub fn ray(square: Square, direction: Direction) -> BitBoard {
         BB_RAY[square][direction]
     }
 
     #[inline]
-    const fn msb(&self) -> Square {
-        Square::new(self.0.trailing_zeros() as usize)
+    fn msb(&self) -> Square {
+        Square::new(self.0.trailing_zeros() as usize).unwrap() // TODO: any way to eliminate unwrap()?
     }
 
     pub fn get_capture_mask(
@@ -73,7 +74,17 @@ impl BitBoard {
         ray_start: Square,
         ray_dir: Direction,
     ) -> BitBoard {
-        todo!()
+        let ray_mask = opponent_bb & BitBoard::ray(ray_start, ray_dir);
+        let mut bb = BitBoard(0x0);
+        for square in SquareIterator::new(ray_start, ray_dir) {
+            let bit = BB_POS[square] & ray_mask;
+            if bit == 0 {
+                break;
+            } else {
+                bb |= bit;
+            }
+        }
+        bb
     }
 }
 
@@ -87,7 +98,8 @@ mod tests {
     fn test_msb() {
         assert_eq!(64, 0x0u64.trailing_zeros());
         assert_eq!(0, 0x1u64.trailing_zeros());
-        for square in SquareIterator::new(0) {
+        for idx in 0..(ROWS * COLS) {
+            let square = Square::new(idx).unwrap();
             assert_eq!(square, BB_POS[square].msb());
         }
     }
@@ -100,7 +112,11 @@ mod tests {
 
     #[test]
     fn test_get_capture_mask() {
-        todo!()
+        assert_eq!(
+            BitBoard::get_capture_mask(BB_EMPTY, Square::new(0).unwrap(), Direction::NorthEast),
+            BitBoard(0x0)
+        );
+        // TODO: add more tests
     }
 }
 
