@@ -2,7 +2,7 @@ use std::fmt;
 
 use regex::Regex;
 
-use crate::bitboard::{BitBoard, BB_EMPTY, BB_POS, COLS, ROWS};
+use crate::bitboard::{BitBoard, BB_BLACK, BB_POS, BB_WHITE, COLS, ROWS};
 use crate::FanoronaError;
 use crate::{CaptureType, Direction, Piece, Square};
 
@@ -170,7 +170,7 @@ impl TryFrom<&str> for BaseBoard {
 impl BaseBoard {
     pub fn new() -> BaseBoard {
         BaseBoard {
-            pieces: [BB_EMPTY, BB_EMPTY],
+            pieces: [BB_BLACK, BB_WHITE],
         }
     }
 
@@ -209,12 +209,6 @@ impl BaseBoard {
             )))?;
         self.set_piece_at(piece, to);
         Ok(())
-    }
-
-    pub fn capture_exists(&self) -> bool {
-        // check all possible moves for any side and see if move is a capture (is_capture)
-        // needs a pseudo-legal move generator
-        todo!()
     }
 
     pub fn is_approach_capture(
@@ -279,6 +273,25 @@ impl BaseBoard {
                 }
             }
         }
+    }
+
+    pub fn capture_exists(&self, side: Piece) -> bool {
+        // check all possible moves for the given side and see if move is a capture (is_capture)
+        for square in Square::new(0) {
+            match self.piece_at(square) {
+                Some(piece) => {
+                    if piece == side {
+                        for direction in Direction::North {
+                            if self.is_capture(square, direction, None).is_ok() {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                None => {}
+            }
+        }
+        return false;
     }
 
     pub fn make_capture(

@@ -117,6 +117,20 @@ impl Square {
     }
 }
 
+impl Iterator for Square {
+    type Item = Square;
+    fn next(&mut self) -> Option<Self::Item> {
+        let result: Option<Self::Item>;
+        if self.0 >= ROWS * COLS {
+            result = None;
+        } else {
+            self.0 += 1;
+            result = Some(Square(self.0 + 1));
+        }
+        result
+    }
+}
+
 pub struct SquareIterator(Square, Direction);
 
 impl SquareIterator {

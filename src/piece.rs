@@ -1,4 +1,5 @@
 use crate::bitboard::BitBoard;
+use std::fmt;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -12,6 +13,15 @@ impl Piece {
         match self {
             Piece::Black => Piece::White,
             Piece::White => Piece::Black,
+        }
+    }
+}
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Piece::Black => write!(f, "B"),
+            Piece::White => write!(f, "W"),
         }
     }
 }

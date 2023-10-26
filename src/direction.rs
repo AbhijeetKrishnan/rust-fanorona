@@ -73,6 +73,47 @@ impl Index<Direction> for [BitBoard; 8] {
     }
 }
 
+impl Iterator for Direction {
+    type Item = Direction;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Direction::North => {
+                *self = Direction::NorthEast;
+                Some(Direction::North)
+            }
+            Direction::NorthEast => {
+                *self = Direction::East;
+                Some(Direction::NorthEast)
+            }
+            Direction::East => {
+                *self = Direction::SouthEast;
+                Some(Direction::East)
+            }
+            Direction::SouthEast => {
+                *self = Direction::South;
+                Some(Direction::SouthEast)
+            }
+            Direction::South => {
+                *self = Direction::SouthWest;
+                Some(Direction::South)
+            }
+            Direction::SouthWest => {
+                *self = Direction::West;
+                Some(Direction::SouthWest)
+            }
+            Direction::West => {
+                *self = Direction::NorthWest;
+                Some(Direction::West)
+            }
+            Direction::NorthWest => {
+                *self = Direction::North;
+                Some(Direction::NorthWest)
+            }
+        }
+    }
+}
+
 impl Direction {
     pub const fn mirror(self) -> Direction {
         match self {

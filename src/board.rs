@@ -12,7 +12,25 @@ pub struct Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.base_board.to_string())
+        match self.last_capture {
+            // TODO: handle printing of self.visited better
+            Some(last_capture) => write!(
+                f,
+                "{} {} {} {}",
+                self.base_board.to_string(),
+                self.turn,
+                self.visited,
+                last_capture
+            ),
+            None => write!(
+                f,
+                "{} {} {} {}",
+                self.base_board.to_string(),
+                self.turn,
+                self.visited,
+                "-"
+            ),
+        }
     }
 }
 
@@ -20,6 +38,7 @@ impl TryFrom<&str> for Board {
     type Error = FanoronaError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
+        // TODO: parse string to create Board object
         todo!()
     }
 }
@@ -108,7 +127,7 @@ impl Board {
                     .is_capture(from, direction, capture_type)
                     .is_ok()
                 {
-                    !self.base_board.capture_exists() // if paika is played, possible capture must not exist
+                    !self.base_board.capture_exists(self.turn) // if paika is played, possible capture must not exist
                 } else {
                     // if capture type is not provided, capture must be unambiguous
                     !(capture_type.is_none()
@@ -132,6 +151,8 @@ impl Board {
         self.push(fmove)
     }
 }
+
+// TODO: implement API for move generation
 
 #[cfg(test)]
 mod tests {
