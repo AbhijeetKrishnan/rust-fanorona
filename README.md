@@ -42,6 +42,6 @@ The starting board state is represented as follows -
 
 After the move e2-e3A, the board state is -
 
-`WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBB1BBBB/BBBB1BBBB W e2 N`
+`WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBB1BBBB/BBBB1BBBB W e2,e3 e2-e3A`
 
-The first field denotes the pieces at each location, with numbers used to indicate that number of consecutive empty spaces along the row. The next field denotes the turn. Then comes the list of visited points during a capturing sequence, and finally the last field indicates the last capturing direction. These fields are '-' if not in a capturing sequence.
+The first field denotes the pieces at each location, with numbers used to indicate that number of consecutive empty spaces along the row. The next field denotes the turn. Then comes the (unordered) list of visited points during a capturing sequence, from first to last, and finally the last field indicates the last capturing move. These fields are '-' if not in a capturing sequence.

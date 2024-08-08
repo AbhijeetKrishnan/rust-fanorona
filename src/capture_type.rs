@@ -31,6 +31,20 @@ impl TryFrom<&str> for CaptureType {
     }
 }
 
+impl Iterator for CaptureType {
+    type Item = CaptureType;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Approach => {
+                *self = Self::Withdrawal;
+                Some(Self::Approach)
+            }
+            Self::Withdrawal => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

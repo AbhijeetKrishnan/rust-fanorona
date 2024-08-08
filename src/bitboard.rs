@@ -1,5 +1,6 @@
 use crate::square::SquareIterator;
 use crate::Direction;
+use crate::FanoronaError;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
@@ -66,7 +67,7 @@ impl BitBoard {
 
     #[inline]
     fn msb(&self) -> Square {
-        Square::new(self.0.trailing_zeros() as usize).unwrap() // TODO: any way to eliminate unwrap()?
+        Square::new(self.0.trailing_zeros() as usize).expect("Could not get square from msb*()")
     }
 
     pub fn get_capture_mask(
@@ -88,10 +89,21 @@ impl BitBoard {
     }
 }
 
+impl TryFrom<&str> for BitBoard {
+    type Error = FanoronaError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let mut bb = BitBoard(0x0);
+        for sq_str in value.split(',') {
+            let square = Square::try_from(sq_str)?;
+            bb |= BB_POS[square];
+        }
+        Ok(bb)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::square::SquareIterator;
-
     use super::*;
 
     #[test]
@@ -116,7 +128,11 @@ mod tests {
             BitBoard::get_capture_mask(BB_EMPTY, Square::new(0).unwrap(), Direction::NorthEast),
             BitBoard(0x0)
         );
-        // TODO: add more tests
+    }
+
+    #[test]
+    fn test_ray() {
+        todo!();
     }
 }
 

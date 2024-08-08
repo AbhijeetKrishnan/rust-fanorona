@@ -1,4 +1,5 @@
 use crate::bitboard::BitBoard;
+use crate::FanoronaError;
 use std::fmt;
 use std::ops::{Index, IndexMut};
 
@@ -22,6 +23,20 @@ impl fmt::Display for Piece {
         match self {
             Piece::Black => write!(f, "B"),
             Piece::White => write!(f, "W"),
+        }
+    }
+}
+
+impl TryFrom<&str> for Piece {
+    type Error = FanoronaError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "B" => Ok(Piece::Black),
+            "W" => Ok(Piece::White),
+            _ => Err(FanoronaError::ParseError(String::from(
+                "Could not parse piece string",
+            ))),
         }
     }
 }
@@ -68,7 +83,7 @@ mod tests {
 
     #[test]
     fn test_index_mut() {
-        let mut bb = [BB_BLACK, BB_WHITE];
+        let bb = [BB_BLACK, BB_WHITE];
         let piece = Piece::Black;
         assert_eq!(BB_BLACK, bb[piece]);
         assert_eq!(BB_WHITE, bb[piece.other()]);

@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::{base_board::IsCaptureReason, bitboard, BaseBoard, FanoronaError, Move, Piece};
+use crate::{
+    base_board::IsCaptureReason, bitboard, capture_type, direction::Direction, square::Square,
+    BaseBoard, FanoronaError, Move, Piece,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
@@ -20,7 +23,7 @@ impl fmt::Display for Board {
                 self.base_board.to_string(),
                 self.turn,
                 self.visited,
-                last_capture
+                last_capture,
             ),
             None => write!(
                 f,
@@ -38,8 +41,31 @@ impl TryFrom<&str> for Board {
     type Error = FanoronaError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        // TODO: parse string to create Board object
-        todo!()
+        let mut iter = value.split_whitespace();
+        let board_str = iter.next().ok_or(FanoronaError::ParseError(String::from(
+            "Could not get board string",
+        )))?;
+        let turn_str = iter.next().ok_or(FanoronaError::ParseError(String::from(
+            "Could not get turn string",
+        )))?;
+        let visited_str = iter.next().ok_or(FanoronaError::ParseError(String::from(
+            "Could not get visited string",
+        )))?;
+        let last_capture_str = iter.next().ok_or(FanoronaError::ParseError(String::from(
+            "Could not get last capture string",
+        )))?;
+
+        let base_board = BaseBoard::try_from(board_str)?;
+        let turn = Piece::try_from(turn_str)?;
+        let visited = bitboard::BitBoard::try_from(visited_str)?;
+        let last_capture = Move::try_from(last_capture_str)?;
+
+        Ok(Board {
+            base_board,
+            turn,
+            visited,
+            last_capture: Some(last_capture),
+        })
     }
 }
 
@@ -101,7 +127,7 @@ impl Board {
         }
     }
 
-    pub fn legal_move(&self, fmove: Move) -> bool {
+    pub fn is_legal(&self, fmove: Move) -> bool {
         match fmove {
             Move::Move {
                 from,
@@ -150,13 +176,34 @@ impl Board {
         println!("{:?}", fmove);
         self.push(fmove)
     }
-}
 
-// TODO: implement API for move generation
+    pub fn legal_moves(&self) -> Vec<Move> {
+        let mut moves = Vec::new();
+        for from in Square::new(0).iter() {
+            if self.base_board.piece_at(*from) == Some(self.turn) {
+                for direction in Direction::North {
+                    for capture_type in capture_type::CaptureType::Approach {
+                        let move_ = Move::Move {
+                            from: *from,
+                            direction,
+                            capture_type: Some(capture_type),
+                        };
+                        if self.is_legal(move_) {
+                            moves.push(move_);
+                        }
+                    }
+                }
+            }
+        }
+        if self.in_capture_seq() {
+            moves.push(Move::EndTurn);
+        }
+        moves
+    }
+}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_display() {
@@ -194,12 +241,17 @@ mod tests {
     }
 
     #[test]
-    fn test_legal_move() {
+    fn test_is_legal() {
         todo!()
     }
 
     #[test]
     fn test_push_str() {
+        todo!()
+    }
+
+    #[test]
+    fn test_legal_moves() {
         todo!()
     }
 }

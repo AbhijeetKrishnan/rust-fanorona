@@ -277,12 +277,12 @@ impl BaseBoard {
 
     pub fn capture_exists(&self, side: Piece) -> bool {
         // check all possible moves for the given side and see if move is a capture (is_capture)
-        for square in Square::new(0) {
-            match self.piece_at(square) {
+        for square in Square::new(0).iter() {
+            match self.piece_at(*square) {
                 Some(piece) => {
                     if piece == side {
                         for direction in Direction::North {
-                            if self.is_capture(square, direction, None).is_ok() {
+                            if self.is_capture(*square, direction, None).is_ok() {
                                 return true;
                             }
                         }
@@ -359,34 +359,42 @@ mod tests {
         todo!()
     }
 
+    #[test]
     fn test_new() {
         todo!()
     }
 
+    #[test]
     fn test_piece_at() {
         todo!()
     }
 
+    #[test]
     fn test_remove_piece_at() {
         todo!()
     }
 
+    #[test]
     fn test_set_piece_at() {
         todo!()
     }
 
+    #[test]
     fn test_make_paika() {
         todo!()
     }
 
+    #[test]
     fn test_capture_exists() {
         todo!()
     }
 
+    #[test]
     fn test_is_capture() {
         todo!()
     }
 
+    #[test]
     fn test_make_capture() {
         todo!()
     }

@@ -12,7 +12,7 @@ mod action;
 use action::Move;
 
 mod square;
-use square::{Square, SquareIterator};
+use square::Square;
 
 mod direction;
 use direction::Direction;
@@ -34,6 +34,7 @@ pub enum FanoronaError {
     MoveError(String),
     SquareOutOfBoundsError(String),
     RegexError(regex::Error),
+    ParseError(String),
 }
 
 impl std::error::Error for FanoronaError {}
@@ -49,7 +50,8 @@ impl fmt::Display for FanoronaError {
         match self {
             FanoronaError::TryFromStrError(msg)
             | FanoronaError::MoveError(msg)
-            | FanoronaError::SquareOutOfBoundsError(msg) => write!(f, "{}", msg),
+            | FanoronaError::SquareOutOfBoundsError(msg)
+            | FanoronaError::ParseError(msg) => write!(f, "{}", msg),
             FanoronaError::RegexError(err) => write!(f, "{}", err.to_string()),
         }
     }
