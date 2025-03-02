@@ -2,7 +2,7 @@ use std::fmt;
 
 use regex::Regex;
 
-use crate::bitboard::{BitBoard, BB_BLACK, BB_POS, BB_WHITE, COLS, ROWS};
+use crate::bitboard::{BitBoard, BB_BLACK, BB_EMPTY, BB_POS, BB_WHITE, COLS, ROWS};
 use crate::FanoronaError;
 use crate::{CaptureType, Direction, Piece, Square};
 
@@ -134,7 +134,9 @@ impl TryFrom<&str> for BaseBoard {
                 .as_str()
                 .to_string();
         }
-        let mut base_board = BaseBoard::new();
+        let mut base_board = BaseBoard {
+            pieces: [BB_EMPTY, BB_EMPTY],
+        };
         for row in 0..ROWS {
             let mut col: u32 = 0;
             for c in rows[row].chars() {
@@ -143,11 +145,13 @@ impl TryFrom<&str> for BaseBoard {
                         let piece = Piece::White;
                         let at = Square::from((row, col as usize));
                         base_board.set_piece_at(piece, at);
+                        col += 1;
                     }
                     'b' | 'B' => {
                         let piece = Piece::Black;
                         let at = Square::from((row, col as usize));
                         base_board.set_piece_at(piece, at);
+                        col += 1;
                     }
                     '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                         col += char::to_digit(c, 10).ok_or_else(|| {
@@ -164,6 +168,12 @@ impl TryFrom<&str> for BaseBoard {
             }
         }
         Ok(base_board)
+    }
+}
+
+impl PartialEq for BaseBoard {
+    fn eq(&self, other: &Self) -> bool {
+        self.pieces[0] == other.pieces[0] && self.pieces[1] == other.pieces[1]
     }
 }
 
@@ -277,12 +287,12 @@ impl BaseBoard {
 
     pub fn capture_exists(&self, side: Piece) -> bool {
         // check all possible moves for the given side and see if move is a capture (is_capture)
-        for square in Square::new(0).iter() {
-            match self.piece_at(*square) {
+        for square in Square::from(0) {
+            match self.piece_at(square) {
                 Some(piece) => {
                     if piece == side {
                         for direction in Direction::North {
-                            if self.is_capture(*square, direction, None).is_ok() {
+                            if self.is_capture(square, direction, None).is_ok() {
                                 return true;
                             }
                         }
@@ -338,17 +348,20 @@ impl BaseBoard {
 
 #[cfg(test)]
 mod tests {
-    use crate::bitboard::{BB_BLACK, BB_WHITE};
+    use crate::bitboard::{BB_BLACK, BB_EMPTY, BB_WHITE};
 
     use super::*;
 
     #[test]
     fn test_display() {
-        assert_eq!("9/9/9/9/9", BaseBoard::new().to_string());
         assert_eq!(
             "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB",
+            BaseBoard::new().to_string()
+        );
+        assert_eq!(
+            "9/9/9/9/9",
             BaseBoard {
-                pieces: [BB_BLACK, BB_WHITE]
+                pieces: [BB_EMPTY, BB_EMPTY]
             }
             .to_string()
         );
@@ -356,12 +369,28 @@ mod tests {
 
     #[test]
     fn test_try_from() {
-        todo!()
+        assert_eq!(
+            BaseBoard {
+                pieces: [BB_EMPTY, BB_EMPTY]
+            },
+            BaseBoard::try_from("9/9/9/9/9").unwrap()
+        );
+        assert_eq!(
+            BaseBoard {
+                pieces: [BB_BLACK, BB_WHITE]
+            },
+            BaseBoard::try_from("WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB").unwrap()
+        );
     }
 
     #[test]
     fn test_new() {
-        todo!()
+        assert_eq!(
+            BaseBoard {
+                pieces: [BB_BLACK, BB_WHITE]
+            },
+            BaseBoard::new()
+        );
     }
 
     #[test]

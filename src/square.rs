@@ -124,8 +124,8 @@ impl Iterator for Square {
         if self.0 >= ROWS * COLS {
             result = None;
         } else {
+            result = Some(*self);
             self.0 += 1;
-            result = Some(Square(self.0 + 1));
         }
         result
     }
@@ -161,25 +161,24 @@ mod tests {
     }
 
     #[test]
-    fn test_from_u32() {
+    fn test_from_usize() {
         assert_eq!(Square(0), Square::from(0usize));
         assert_eq!(Square(33), Square::from(33usize));
         assert_eq!(Square(500), Square::from(500usize));
     }
 
     #[test]
-    fn test_from_usize() {
-        todo!()
-    }
-
-    #[test]
     fn test_from_tuple() {
-        todo!()
+        assert_eq!(Square(0), Square::from((0, 0)));
+        assert_eq!(Square(33), Square::from((3, 6)));
+        assert_eq!(Square(500), Square::from((55, 5)));
     }
 
     #[test]
     fn test_into_tuple() {
-        todo!()
+        assert_eq!((0, 0), Square::into(Square(0)));
+        assert_eq!((3, 6), Square::into(Square(33)));
+        assert_eq!((55, 5), Square::into(Square(500)));
     }
 
     #[test]
@@ -190,12 +189,23 @@ mod tests {
 
     #[test]
     fn test_new() {
-        todo!()
+        assert!(Square::new(0usize).is_ok());
+        assert!(Square::new(33usize).is_ok());
+        assert!(Square::new(500usize).is_err());
     }
 
     #[test]
     fn test_translate() {
-        todo!()
+        assert_eq!(Square(1), Square(0).translate(Direction::East).unwrap());
+    }
+
+    #[test]
+    fn test_iterator() {
+        let sq = Square(0);
+        for curr_sq in sq {
+            println!("{}", curr_sq.0);
+            assert!(curr_sq.0 < ROWS * COLS);
+        }
     }
 
     #[test]

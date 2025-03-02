@@ -204,6 +204,9 @@ impl Board {
 
 #[cfg(test)]
 mod tests {
+    use rand::prelude::SliceRandom;
+
+    use super::*;
 
     #[test]
     fn test_display() {
@@ -236,22 +239,51 @@ mod tests {
     }
 
     #[test]
-    fn test_is_capture() {
-        todo!()
-    }
-
-    #[test]
-    fn test_is_legal() {
-        todo!()
-    }
-
-    #[test]
     fn test_push_str() {
         todo!()
     }
 
     #[test]
+    fn test_is_capture() {
+        todo!()
+    }
+
+    // TODO: fix timeout on test_is_legal
+    #[test]
+    fn test_is_legal() {
+        let board = Board::new();
+        assert!(board.is_legal(Move::Move {
+            from: Square::try_from("e2").expect("Failed to create move e2"),
+            direction: Direction::North,
+            capture_type: Some(capture_type::CaptureType::Approach),
+        }));
+    }
+
+    #[test]
     fn test_legal_moves() {
         todo!()
+    }
+
+    // TODO: fix timeout on test_is_legal and ensure test_stress also passes
+    #[ignore]
+    #[test]
+    fn test_stress() {
+        let times = 20;
+        for _ in 1..times {
+            let mut board = Board::new();
+            loop {
+                println!("{}", board);
+                let legal_moves = board.legal_moves();
+                println!("{:?}", legal_moves);
+                if legal_moves.is_empty() {
+                    break;
+                }
+                let move_ = legal_moves
+                    .choose(&mut rand::thread_rng())
+                    .expect("Failed to choose a legal move");
+                println!("{}", move_);
+                let _ = board.push(*move_).expect("Failed to push move");
+            }
+        }
     }
 }
