@@ -5,17 +5,23 @@ use crate::{CaptureType, Direction, FanoronaError, Square};
 
 use regex::Regex;
 
+/// The representation of a Fanorona move
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Move {
+    /// A move that moves a piece from a particular square, in a particular direction, and using an approach or
+    /// withdrawal capture type (if applicable)
     Move {
         from: Square,
         direction: Direction,
         capture_type: Option<CaptureType>,
     },
+
+    /// A move that ends the current turn if in a capture sequence
     EndTurn,
 }
 
 impl fmt::Display for Move {
+    /// Print a move with its from square, direction and capture type (if any). End turn moves are printed as "X".
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Move::Move {
@@ -44,6 +50,11 @@ impl fmt::Display for Move {
 impl TryFrom<&str> for Move {
     type Error = FanoronaError;
 
+    /// Parse a move string to create a Move
+    ///
+    /// A move string specifies from square, direction and capture type ("F" for forward, "B" for backward) if any.
+    /// The end turn move is represented as "X".
+    /// The parsing is case-insensitive.
     fn try_from(move_str: &str) -> Result<Move, FanoronaError> {
         let re = Regex::new(
             r"(?x)

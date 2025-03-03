@@ -1,6 +1,7 @@
 use crate::{bitboard::BitBoard, FanoronaError};
 use std::{fmt, ops::Index, string::String};
 
+/// A representation of the eight move directions in Fanorona
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Direction {
     North,
@@ -11,9 +12,11 @@ pub enum Direction {
     NorthEast,
     SouthWest,
     SouthEast,
+    X, // dummy direction to stop iteration
 }
 
 impl fmt::Display for Direction {
+    /// Prints a direction in uppercase
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let dir_str = match self {
             Direction::North => String::from("N"),
@@ -24,6 +27,7 @@ impl fmt::Display for Direction {
             Direction::NorthEast => String::from("NE"),
             Direction::SouthWest => String::from("SW"),
             Direction::SouthEast => String::from("SE"),
+            Direction::X => String::from("X"),
         };
         write!(f, "{}", dir_str)
     }
@@ -40,6 +44,7 @@ impl Into<usize> for Direction {
             Direction::SouthWest => 5usize,
             Direction::West => 6usize,
             Direction::NorthWest => 7usize,
+            Direction::X => 8usize,
         }
     }
 }
@@ -47,6 +52,9 @@ impl Into<usize> for Direction {
 impl TryFrom<&str> for Direction {
     type Error = FanoronaError;
 
+    /// Parse a direction string as a Direction
+    ///
+    /// Parsing is case-insensitive
     fn try_from(dir_str: &str) -> Result<Direction, FanoronaError> {
         match dir_str {
             "N" | "n" => Ok(Direction::North),
@@ -76,6 +84,7 @@ impl Index<Direction> for [BitBoard; 8] {
 impl Iterator for Direction {
     type Item = Direction;
 
+    /// Iterate clockwise over the directions and stop at NorthWest
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Direction::North => {
@@ -107,14 +116,16 @@ impl Iterator for Direction {
                 Some(Direction::West)
             }
             Direction::NorthWest => {
-                *self = Direction::North;
+                *self = Direction::X;
                 Some(Direction::NorthWest)
             }
+            Direction::X => None,
         }
     }
 }
 
 impl Direction {
+    /// Return the mirror image of the direction flipped 180°
     pub const fn mirror(self) -> Direction {
         match self {
             Direction::North => Direction::South,
@@ -125,9 +136,11 @@ impl Direction {
             Direction::SouthWest => Direction::NorthEast,
             Direction::West => Direction::East,
             Direction::NorthWest => Direction::SouthEast,
+            Direction::X => Direction::X,
         }
     }
 
+    /// Return the delta needed to traverse the board in this direction in square-index space
     pub const fn to_increment(self) -> i8 {
         match self {
             Direction::North => 9,
@@ -138,6 +151,7 @@ impl Direction {
             Direction::SouthWest => -10,
             Direction::West => -1,
             Direction::NorthWest => 8,
+            Direction::X => 0,
         }
     }
 }
@@ -150,8 +164,14 @@ mod tests {
 
     #[test]
     fn test_display() {
-        let dir = Direction::North;
-        assert_eq!("N", dir.to_string());
+        assert_eq!("N", Direction::North.to_string());
+        assert_eq!("NE", Direction::NorthEast.to_string());
+        assert_eq!("E", Direction::East.to_string());
+        assert_eq!("SE", Direction::SouthEast.to_string());
+        assert_eq!("S", Direction::South.to_string());
+        assert_eq!("SW", Direction::SouthWest.to_string());
+        assert_eq!("W", Direction::West.to_string());
+        assert_eq!("NW", Direction::NorthWest.to_string());
     }
 
     #[test]
@@ -164,19 +184,37 @@ mod tests {
 
     #[test]
     fn test_into() {
-        let dir = Direction::North;
-        assert_eq!(0usize, dir.into());
+        assert_eq!(0usize, Direction::North.into());
+        assert_eq!(1usize, Direction::NorthEast.into());
+        assert_eq!(2usize, Direction::East.into());
+        assert_eq!(3usize, Direction::SouthEast.into());
+        assert_eq!(4usize, Direction::South.into());
+        assert_eq!(5usize, Direction::SouthWest.into());
+        assert_eq!(6usize, Direction::West.into());
+        assert_eq!(7usize, Direction::NorthWest.into());
     }
 
     #[test]
     fn test_index() {
-        let dir = Direction::North;
-        assert_eq!(BB_RAY[0][0], BB_RAY[0][dir]);
+        assert_eq!(BB_RAY[0][0], BB_RAY[0][Direction::North]);
+        assert_eq!(BB_RAY[0][1], BB_RAY[0][Direction::NorthEast]);
+        assert_eq!(BB_RAY[0][2], BB_RAY[0][Direction::East]);
+        assert_eq!(BB_RAY[0][3], BB_RAY[0][Direction::SouthEast]);
+        assert_eq!(BB_RAY[0][4], BB_RAY[0][Direction::South]);
+        assert_eq!(BB_RAY[0][5], BB_RAY[0][Direction::SouthWest]);
+        assert_eq!(BB_RAY[0][6], BB_RAY[0][Direction::West]);
+        assert_eq!(BB_RAY[0][7], BB_RAY[0][Direction::NorthWest]);
     }
 
     #[test]
     fn test_mirror() {
-        let dir = Direction::North;
-        assert_eq!(Direction::South, dir.mirror());
+        assert_eq!(Direction::South, Direction::North.mirror());
+        assert_eq!(Direction::SouthWest, Direction::NorthEast.mirror());
+        assert_eq!(Direction::West, Direction::East.mirror());
+        assert_eq!(Direction::NorthWest, Direction::SouthEast.mirror());
+        assert_eq!(Direction::North, Direction::South.mirror());
+        assert_eq!(Direction::NorthEast, Direction::SouthWest.mirror());
+        assert_eq!(Direction::East, Direction::West.mirror());
+        assert_eq!(Direction::SouthEast, Direction::NorthWest.mirror());
     }
 }

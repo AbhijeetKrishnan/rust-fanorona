@@ -1,28 +1,75 @@
 use std::fmt;
 
 use crate::{
-    base_board::IsCaptureReason, bitboard, capture_type, direction::Direction, square::Square,
-    BaseBoard, FanoronaError, Move, Piece,
+    base_board::IsCaptureReason, bitboard, capture_type::CaptureType, direction::Direction,
+    square::Square, BaseBoard, FanoronaError, Move, Piece,
 };
 
+#[derive(Debug)]
+pub enum IsLegalReason {
+    OwnPieceNotMoved,
+    PieceMovingOutOfBounds,
+    LastCaptureOutOfBounds,
+    MoveMustFollowLastCapture,
+    VisitingVisitedSquare,
+    CannotCaptureSameDirection,
+    PaikaWhenCaptureExists,
+    AmbiguousCapture,
+    EndTurnWithoutCaptureSequence,
+    LastCaptureNotByCurrentPlayer,
+    LastCaptureNoneInCaptureSequence,
+}
+
+impl std::error::Error for IsLegalReason {}
+
+impl fmt::Display for IsLegalReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            IsLegalReason::OwnPieceNotMoved => write!(f, "{}", "The move must operate on the piece belonging to the player whose turn it is to play"),
+            IsLegalReason::PieceMovingOutOfBounds => write!(f, "{}", "The move must not move the piece out of bounds"),
+            IsLegalReason::LastCaptureOutOfBounds => write!(f, "{}", "The last capture was out of bounds"),
+            IsLegalReason::MoveMustFollowLastCapture => write!(f, "{}", "If in a capturing sequence, the same piece must continue to be moved"),
+            IsLegalReason::VisitingVisitedSquare => write!(f, "{}", "Cannot visit a previously visited square during a capturing sequence"),
+            IsLegalReason::CannotCaptureSameDirection => write!(f, "{}", "Cannot capture in the same direction (approach or withdrawal) as the last capture"),
+            IsLegalReason::PaikaWhenCaptureExists => write!(f, "{}", "Cannot play a paika move when a capture exists"),
+            IsLegalReason::AmbiguousCapture => write!(f, "{}", "Must provide a capture type if it is ambiguous"),
+            IsLegalReason::EndTurnWithoutCaptureSequence => write!(f, "{}", "Cannot play end turn when not in a capturing sequence"),
+            IsLegalReason::LastCaptureNotByCurrentPlayer => write!(f, "{}", "Last capture was not made by current player, so end turn cannot be played by the current player"),
+            IsLegalReason::LastCaptureNoneInCaptureSequence => write!(f, "{}", "Last capture cannot be None in a capturing sequence"),
+        }
+    }
+}
+
+/// Reprentation of a Fanorona game state
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
+    /// the current board position
     base_board: BaseBoard,
+
+    /// whose turn it is
     turn: Piece,
+
+    /// a bitmask of all positions visited in the current capturing sequence (if in one)
     visited: bitboard::BitBoard,
+
+    /// the last capturing move made (if any)
     last_capture: Option<Move>,
 }
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.last_capture {
-            // TODO: handle printing of self.visited better
             Some(last_capture) => write!(
                 f,
                 "{} {} {} {}",
                 self.base_board.to_string(),
                 self.turn,
-                self.visited,
+                self.visited
+                    .as_squares()
+                    .iter()
+                    .map(|&sq| sq.to_string())
+                    .collect::<Vec<_>>()
+                    .join(","),
                 last_capture,
             ),
             None => write!(
@@ -30,7 +77,12 @@ impl fmt::Display for Board {
                 "{} {} {} {}",
                 self.base_board.to_string(),
                 self.turn,
-                self.visited,
+                self.visited
+                    .as_squares()
+                    .iter()
+                    .map(|&sq| sq.to_string())
+                    .collect::<Vec<_>>()
+                    .join(","),
                 "-"
             ),
         }
@@ -79,23 +131,24 @@ impl Board {
         }
     }
 
+    /// Pass turn to the other player
     fn pass_turn(&mut self) {
         self.turn = self.turn.other()
     }
 
-    fn in_capture_seq(&self) -> bool {
-        if let Some(Move::Move {
-            from: _,
-            direction: _,
-            capture_type: _,
-        }) = self.last_capture
-        {
-            true
-        } else {
-            false
+    /// Test if a given move is a capturing move
+    pub fn is_capture(&self, fmove: Move) -> Result<(), IsCaptureReason> {
+        match fmove {
+            Move::Move {
+                from,
+                direction,
+                capture_type,
+            } => self.base_board.is_capture(from, direction, capture_type),
+            Move::EndTurn => Err(IsCaptureReason::EndTurnMove),
         }
     }
 
+    /// Execute a given move in the current game state
     pub fn push(&mut self, fmove: Move) -> Result<(), FanoronaError> {
         match fmove {
             Move::EndTurn => {
@@ -109,86 +162,143 @@ impl Board {
                 direction,
                 capture_type,
             } => {
-                self.last_capture = Some(fmove);
-                self.visited |= bitboard::BB_POS[from];
-                self.base_board.make_capture(from, direction, capture_type)
+                if self.is_capture(fmove).is_ok() {
+                    self.last_capture = Some(fmove);
+                    self.visited |= bitboard::BitBoard::pos(from);
+                    self.base_board.make_capture(from, direction, capture_type)
+                } else {
+                    self.last_capture = None;
+                    self.visited &= bitboard::BB_EMPTY;
+                    self.base_board.make_paika(from, direction)
+                }
             }
         }
     }
 
-    pub fn is_capture(&self, fmove: Move) -> Result<(), IsCaptureReason> {
-        match fmove {
-            Move::Move {
-                from,
-                direction,
-                capture_type,
-            } => self.base_board.is_capture(from, direction, capture_type),
-            Move::EndTurn => Err(IsCaptureReason::EndTurnMove),
+    /// Test if the game is currently in a capturing sequence
+    ///
+    /// Implemented by testing if the `last_capture` field contains a valid move. This is only true if the last move
+    /// was a valid capture.
+    fn in_capture_seq(&self) -> bool {
+        if let Some(Move::Move {
+            from: _,
+            direction: _,
+            capture_type: _,
+        }) = self.last_capture
+        {
+            true
+        } else {
+            false
         }
     }
 
-    pub fn is_legal(&self, fmove: Move) -> bool {
+    /// Test if a move is legal to play in the current game state
+    pub fn is_legal(&self, fmove: Move) -> Result<(), IsLegalReason> {
         match fmove {
             Move::Move {
                 from,
                 direction,
                 capture_type,
             } => {
+                if self.base_board.piece_at(from) != Some(self.turn) {
+                    return Err(IsLegalReason::OwnPieceNotMoved);
+                }
+
+                let to = from
+                    .translate(direction)
+                    .ok_or(IsLegalReason::PieceMovingOutOfBounds)
+                    .expect("The translated square should be valid");
+
+                // if `last_capture` is set (i.e., in a capturing sequence), then ensure that -
+                // + the piece being moved is the one that was last moved
+                // + the piece being moved is moving in the same or mirrored direction as the last capture
                 if let Some(Move::Move {
                     from: lc_from,
                     direction: lc_dir,
                     capture_type: _,
                 }) = self.last_capture
                 {
-                    let to_opt = from.translate(direction);
-                    if let Some(to) = to_opt {
-                        from == lc_from
-                            && bitboard::BB_POS[to] & self.visited == 0
-                            && direction != lc_dir
-                    } else {
-                        false
+                    let lc_to = lc_from
+                        .translate(lc_dir)
+                        .ok_or(IsLegalReason::LastCaptureOutOfBounds)
+                        .expect("The translated square should be valid");
+                    if from != lc_to {
+                        return Err(IsLegalReason::MoveMustFollowLastCapture);
                     }
+                    if bitboard::BitBoard::pos(to) & self.visited > 0 {
+                        return Err(IsLegalReason::VisitingVisitedSquare);
+                    }
+                    if direction == lc_dir || direction == lc_dir.mirror() {
+                        return Err(IsLegalReason::CannotCaptureSameDirection);
+                    }
+                    Ok(())
+                // if the game state is not in a capturing sequence and a paika is played, there must not be any
+                // available capture to play
                 } else if !self
                     .base_board
                     .is_capture(from, direction, capture_type)
                     .is_ok()
                 {
-                    !self.base_board.capture_exists(self.turn) // if paika is played, possible capture must not exist
+                    if self.base_board.capture_exists(self.turn) {
+                        return Err(IsLegalReason::PaikaWhenCaptureExists);
+                    }
+                    Ok(())
+                // if a capture is played but a capture type is not provided, the capture type must be unambiguous
+                } else if self.is_capture(fmove) == Err(IsCaptureReason::AmbiguousCapture) {
+                    return Err(IsLegalReason::AmbiguousCapture);
                 } else {
-                    // if capture type is not provided, capture must be unambiguous
-                    !(capture_type.is_none()
-                        && self
-                            .base_board
-                            .is_capture(from, direction.mirror(), capture_type)
-                            .is_ok())
+                    Ok(())
                 }
             }
             Move::EndTurn => {
-                // end turn is assumed to be played for current turn color
                 // end turn is only valid in a capturing sequence
-                self.in_capture_seq()
+                if !self.in_capture_seq() {
+                    return Err(IsLegalReason::EndTurnWithoutCaptureSequence);
+                }
+
+                // end turn must be played for the current player - checked by verifying that the last capture move
+                // moved a piece belonging to the current player
+                if let Some(Move::Move {
+                    from: lc_from,
+                    direction: lc_dir,
+                    capture_type: _,
+                }) = self.last_capture
+                {
+                    let lc_to = lc_from
+                        .translate(lc_dir)
+                        .ok_or(IsLegalReason::LastCaptureOutOfBounds)
+                        .expect("The translated square should be valid");
+                    if self.base_board.piece_at(lc_to) != Some(self.turn) {
+                        return Err(IsLegalReason::LastCaptureNotByCurrentPlayer);
+                    }
+                    Ok(())
+                } else {
+                    Err(IsLegalReason::LastCaptureNoneInCaptureSequence)
+                }
             }
         }
     }
 
+    /// A convenience function to execute a move in the current game state given its representation as a move string
     pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), FanoronaError> {
         let fmove = Move::try_from(fmove_str)?;
         println!("{:?}", fmove);
         self.push(fmove)
     }
 
+    /// Return the list of all legal moves in the current game state
     pub fn legal_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
         for from in Square::new(0).iter() {
             if self.base_board.piece_at(*from) == Some(self.turn) {
                 for direction in Direction::North {
-                    for capture_type in capture_type::CaptureType::Approach {
+                    for capture_type in vec![CaptureType::Approach, CaptureType::Withdrawal] {
                         let move_ = Move::Move {
                             from: *from,
                             direction,
                             capture_type: Some(capture_type),
                         };
-                        if self.is_legal(move_) {
+                        if self.is_legal(move_).is_ok() {
                             moves.push(move_);
                         }
                     }
@@ -248,15 +358,16 @@ mod tests {
         todo!()
     }
 
-    // TODO: fix timeout on test_is_legal
     #[test]
     fn test_is_legal() {
         let board = Board::new();
-        assert!(board.is_legal(Move::Move {
-            from: Square::try_from("e2").expect("Failed to create move e2"),
-            direction: Direction::North,
-            capture_type: Some(capture_type::CaptureType::Approach),
-        }));
+        assert!(board
+            .is_legal(Move::Move {
+                from: Square::try_from("e2").expect("Failed to create move e2"),
+                direction: Direction::North,
+                capture_type: Some(CaptureType::Approach),
+            })
+            .is_ok());
     }
 
     #[test]
@@ -264,8 +375,7 @@ mod tests {
         todo!()
     }
 
-    // TODO: fix timeout on test_is_legal and ensure test_stress also passes
-    #[ignore]
+    // TODO: fix failing test
     #[test]
     fn test_stress() {
         let times = 20;

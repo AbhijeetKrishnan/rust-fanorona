@@ -11,9 +11,26 @@ pub const UNUSED: usize = 19;
 pub const ROWS: usize = 5;
 pub const COLS: usize = 9;
 
+/// A bitboard representation of a Fanorona board position as an unsigned 64-bit integer
+///
+/// Lower order bits 0 to 44 represent the positions occupied by pieces of a single color. If bit i in the bitboard for
+/// white pieces is set, then square i contains a white piece, otherwise it is empty.
+///
+/// The square indices correspond to the layout of the board as follows -
+///
+/// ```
+///   [black] 36 37 38 39 40 41 42 43 44
+///           27 28 29 30 31 32 33 34 35
+///           18 19 20 21 22 23 24 25 26
+///            9 10 11 12 13 14 15 16 17
+///   [white]  0  1  2  3  4  5  6  7  8
+/// ```
+///
+/// The 19 higher-order bits are currently not used for anything.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct BitBoard(u64);
 
+// implement all bitwise operators for operating on BitBoards
 impl_op_ex!(!|bb: &BitBoard| -> BitBoard { BitBoard(!bb.0) });
 impl_op_ex!(&|bb1: &BitBoard, bb2: &BitBoard| -> BitBoard { BitBoard(bb1.0 & bb2.0) });
 impl_op_ex!(| |bb1: &BitBoard, bb2: &BitBoard| -> BitBoard { BitBoard(bb1.0 | bb2.0) });
@@ -26,6 +43,15 @@ impl_op_ex_commutative!(&|bb1: &BitBoard, bb2: &u64| -> BitBoard { BitBoard(bb1.
 impl_op_ex_commutative!(| |bb1: &BitBoard, bb2: &u64| -> BitBoard { BitBoard(bb1.0 | bb2) });
 
 impl fmt::Display for BitBoard {
+    /// Print a BitBoard as a 5x9 grid of the bits
+    /// # Example
+    /// ```
+    /// 0 0 0 0 0 0 0 0 0
+    /// 0 0 0 0 0 0 0 0 0
+    /// 0 1 0 1 0 0 1 0 1
+    /// 1 1 1 1 1 1 1 1 1
+    /// 1 1 1 1 1 1 1 1 1
+    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -60,16 +86,32 @@ impl PartialOrd<u64> for BitBoard {
 }
 
 impl BitBoard {
+    /// Get the bitmask corresponding to the ray of squares given an initial square and direction
+    ///
+    /// # Example
+    /// `ray(Square(12), Direction::NorthEast)` =
+    /// ```
+    ///   0 0 0 0 0 0 1 0 0
+    ///   0 0 0 0 0 1 0 0 0
+    ///   0 0 0 0 1 0 0 0 0
+    ///   0 0 0 1 0 0 0 0 0
+    ///   0 0 0 0 0 0 0 0 0
+    /// ```
     #[inline]
     pub fn ray(square: Square, direction: Direction) -> BitBoard {
         BB_RAY[square][direction]
     }
 
+    /// Get the bitmask corresponding to a particular square
     #[inline]
-    fn msb(&self) -> Square {
-        Square::new(self.0.trailing_zeros() as usize).expect("Could not get square from msb*()")
+    pub fn pos(square: Square) -> BitBoard {
+        BitBoard(1 << <Square as Into<usize>>::into(square))
     }
 
+    /// Get the bitmask corresponding to the ray of squares containing a contiguous sequence of opponent pieces in the
+    /// direction of the ray
+    ///
+    /// Allows for the implementation of capture moves
     pub fn get_capture_mask(
         opponent_bb: BitBoard,
         ray_start: Square,
@@ -87,11 +129,25 @@ impl BitBoard {
         }
         bb
     }
+
+    /// Get the list of Squares that are set in the current BitBoard
+    pub fn as_squares(&self) -> Vec<Square> {
+        let mut squares: Vec<Square> = vec![];
+        for i in 0..ROWS * COLS {
+            if self.0 >> i & 1 == 1 {
+                squares.push(Square::from(i));
+            }
+        }
+        squares
+    }
 }
 
 impl TryFrom<&str> for BitBoard {
     type Error = FanoronaError;
 
+    /// Parse a comma-separated list of squares as a bitboard
+    ///
+    /// Used to parse the list of squares visited during a capture sequence
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let mut bb = BitBoard(0x0);
         for sq_str in value.split(',') {
@@ -105,16 +161,6 @@ impl TryFrom<&str> for BitBoard {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_msb() {
-        assert_eq!(64, 0x0u64.trailing_zeros());
-        assert_eq!(0, 0x1u64.trailing_zeros());
-        for idx in 0..(ROWS * COLS) {
-            let square = Square::new(idx).unwrap();
-            assert_eq!(square, BB_POS[square].msb());
-        }
-    }
 
     #[test]
     fn test_display() {
@@ -134,12 +180,19 @@ mod tests {
     fn test_ray() {
         todo!();
     }
+
+    #[test]
+    fn test_as_squares() {
+        assert_eq!(BB_EMPTY.as_squares(), vec![]);
+        assert_eq!(BB_A1.as_squares(), vec![Square::from(0)]);
+        assert_eq!(BB_I5.as_squares(), vec![Square::from(44)]);
+    }
 }
 
+/// Bitmask corresponding to an empty board
 pub const BB_EMPTY: BitBoard = BitBoard(0x0); // empty board
-pub const BB_ALL: BitBoard = BitBoard(0x1fffffffffff); // full board
 
-// per-square masks
+// Bitmasks corresponding to an individual square
 // TODO: possible to simplify this with a macro?
 const BB_A1: BitBoard = BitBoard(1 << 0);
 const BB_B1: BitBoard = BitBoard(1 << 1);
@@ -188,11 +241,13 @@ const BB_H5: BitBoard = BitBoard(1 << 43);
 const BB_I5: BitBoard = BitBoard(1 << 44);
 
 // BB_POS[sq] gives mask for square sq (A1 is 0, I5 is 44)
+#[rustfmt::skip]
 pub const BB_POS: [BitBoard; ROWS * COLS] = [
-    BB_A1, BB_B1, BB_C1, BB_D1, BB_E1, BB_F1, BB_G1, BB_H1, BB_I1, BB_A2, BB_B2, BB_C2, BB_D2,
-    BB_E2, BB_F2, BB_G2, BB_H2, BB_I2, BB_A3, BB_B3, BB_C3, BB_D3, BB_E3, BB_F3, BB_G3, BB_H3,
-    BB_I3, BB_A4, BB_B4, BB_C4, BB_D4, BB_E4, BB_F4, BB_G4, BB_H4, BB_I4, BB_A5, BB_B5, BB_C5,
-    BB_D5, BB_E5, BB_F5, BB_G5, BB_H5, BB_I5,
+    BB_A1, BB_B1, BB_C1, BB_D1, BB_E1, BB_F1, BB_G1, BB_H1, BB_I1, 
+    BB_A2, BB_B2, BB_C2, BB_D2, BB_E2, BB_F2, BB_G2, BB_H2, BB_I2, 
+    BB_A3, BB_B3, BB_C3, BB_D3, BB_E3, BB_F3, BB_G3, BB_H3, BB_I3, 
+    BB_A4, BB_B4, BB_C4, BB_D4, BB_E4, BB_F4, BB_G4, BB_H4, BB_I4, 
+    BB_A5, BB_B5, BB_C5, BB_D5, BB_E5, BB_F5, BB_G5, BB_H5, BB_I5,
 ];
 
 // BB_MOVES[sq] gives mask for legal squares that can be moved to from sq
@@ -245,26 +300,31 @@ pub const BB_MOVES: [BitBoard; ROWS * COLS] = [
     BitBoard(0x80c00000000),
 ];
 
+/// Bitmasks for all squares along a row
 pub const BB_ROW: [BitBoard; ROWS] = [
-    BitBoard(0x1ff),
-    BitBoard(0x3fe00),
-    BitBoard(0x7fc0000),
-    BitBoard(0xff8000000),
-    BitBoard(0x1ff000000000),
+    BitBoard(0x1ff),          // row 1
+    BitBoard(0x3fe00),        // row 2
+    BitBoard(0x7fc0000),      // row 3
+    BitBoard(0xff8000000),    // row 4
+    BitBoard(0x1ff000000000), // row 5
 ];
 
+/// Bitmasks for all squares along a column
 pub const BB_COL: [BitBoard; COLS] = [
-    BitBoard(0x1008040201),
-    BitBoard(0x2010080402),
-    BitBoard(0x4020100804),
-    BitBoard(0x8040201008),
-    BitBoard(0x10080402010),
-    BitBoard(0x20100804020),
-    BitBoard(0x40201008040),
-    BitBoard(0x80402010080),
-    BitBoard(0x100804020100),
+    BitBoard(0x1008040201),   // column A
+    BitBoard(0x2010080402),   // column B
+    BitBoard(0x4020100804),   // column C
+    BitBoard(0x8040201008),   // column D
+    BitBoard(0x10080402010),  // column E
+    BitBoard(0x20100804020),  // column F
+    BitBoard(0x40201008040),  // column G
+    BitBoard(0x80402010080),  // column H
+    BitBoard(0x100804020100), // column I
 ];
 
+/// Bitmasks for all possible rays
+///
+/// `BB_RAY[square][direction]` gives the bitmask of all squares along `direction`, starting from `square`
 pub const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
     [
         BitBoard(0x1008040200),
@@ -718,5 +778,8 @@ pub const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
     ],
 ];
 
+/// Bitmask of starting board positions for the black pieces
 pub const BB_BLACK: BitBoard = BitBoard(0x1ffffa940000);
+
+/// Bitmask of starting board positions for the white pieces
 pub const BB_WHITE: BitBoard = BitBoard(0x52bffff);

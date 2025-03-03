@@ -6,7 +6,8 @@ use crate::bitboard::{BitBoard, BB_BLACK, BB_EMPTY, BB_POS, BB_WHITE, COLS, ROWS
 use crate::FanoronaError;
 use crate::{CaptureType, Direction, Piece, Square};
 
-#[derive(Debug)]
+/// Enum of error reasons for `is_capture`
+#[derive(Debug, PartialEq)]
 pub enum IsCaptureReason {
     FromEmpty,
     SquareOutOfBounds,
@@ -43,6 +44,9 @@ impl fmt::Display for IsCaptureReason {
     }
 }
 
+/// Representation of a Fanorona board position
+///
+/// Uses two bitboards to store the positions of the white and black pieces.
 #[derive(Clone, Copy)]
 pub struct BaseBoard {
     pieces: [BitBoard; 2],
@@ -106,6 +110,13 @@ impl fmt::Display for BaseBoard {
 impl TryFrom<&str> for BaseBoard {
     type Error = FanoronaError;
 
+    /// Parse a Fanorona board string into a BaseBoard
+    ///
+    /// A Fanorona board string is an adaptation of [FEN](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation)
+    /// with a few key simplifications -
+    /// + The only piece types are white ("W") and black ("B")
+    /// + There are only 5 ranks, but 9 files
+    /// + The ordering of ranks is reversed, starting from rank 1 and going to rank 5
     fn try_from(board_str: &str) -> Result<Self, Self::Error> {
         let re = Regex::new(
             r"(?x)
@@ -184,30 +195,35 @@ impl BaseBoard {
         }
     }
 
+    /// Returns the piece type located as a particular square
     pub fn piece_at(&self, at: Square) -> Option<Piece> {
-        if self.pieces[Piece::White] & !BB_POS[at] > 0 {
+        if self.pieces[Piece::White] & BB_POS[at] > 0 {
             Some(Piece::White)
-        } else if self.pieces[Piece::Black] & !BB_POS[at] > 0 {
+        } else if self.pieces[Piece::Black] & BB_POS[at] > 0 {
             Some(Piece::Black)
         } else {
             None
         }
     }
 
-    pub fn remove_piece_from(&mut self, at: Square) -> Option<Piece> {
+    /// Remove a piece from a square on the board
+    pub fn remove_piece_at(&mut self, at: Square) -> Option<Piece> {
         let piece = self.piece_at(at);
         self.pieces[Piece::Black] &= !BB_POS[at];
         self.pieces[Piece::White] &= !BB_POS[at];
         piece
     }
 
+    /// Set a piece at the square on the board, overwriting what might have been there initially
     pub fn set_piece_at(&mut self, piece: Piece, at: Square) {
-        self.pieces[piece] |= BB_POS[at]
+        self.pieces[piece] |= BB_POS[at]; // set piece of given color
+        self.pieces[piece.other()] &= !BB_POS[at] // remove piece of other color
     }
 
+    /// Operationalize a paika move that involves only moving a piece in a given direction, without any captures
     pub fn make_paika(&mut self, from: Square, direction: Direction) -> Result<(), FanoronaError> {
         let piece = self
-            .remove_piece_from(from)
+            .remove_piece_at(from)
             .ok_or(FanoronaError::MoveError(String::from(format!(
                 "Piece does not exist at {}",
                 from.to_string()
@@ -221,6 +237,7 @@ impl BaseBoard {
         Ok(())
     }
 
+    /// Test if a given move could result in an approach capture
     pub fn is_approach_capture(
         &self,
         from: Square,
@@ -243,6 +260,7 @@ impl BaseBoard {
         }
     }
 
+    /// Test if a given move could result in a withdraw capture
     pub fn is_withdraw_capture(
         &self,
         from: Square,
@@ -262,6 +280,11 @@ impl BaseBoard {
         }
     }
 
+    /// Test if a given move is a capture, given an optional capture type
+    ///
+    /// If a capture type is provided, this function tests if the given move can be treated as a capturing move of that
+    /// type. If no capture type is provided, it tries to treat the move as both an approach capture and a withdrawal
+    /// capture. If both are possible, it raises an error, since the capture type must be unambiguous.
     pub fn is_capture(
         &self,
         from: Square,
@@ -274,26 +297,34 @@ impl BaseBoard {
             None => {
                 let approach = self.is_approach_capture(from, direction);
                 let withdraw = self.is_withdraw_capture(from, direction);
-                if approach.is_ok() && withdraw.is_err() {
+                if approach.is_ok() && withdraw.is_ok() {
                     Err(IsCaptureReason::AmbiguousCapture)
-                } else if approach.is_err() {
+                } else if approach.is_ok() {
+                    approach
+                } else if withdraw.is_ok() {
                     withdraw
                 } else {
-                    approach
+                    approach // return approach result if neither is possible
                 }
             }
         }
     }
 
+    /// Check if a legal capturing move exists for the given side
     pub fn capture_exists(&self, side: Piece) -> bool {
-        // check all possible moves for the given side and see if move is a capture (is_capture)
         for square in Square::from(0) {
             match self.piece_at(square) {
                 Some(piece) => {
                     if piece == side {
                         for direction in Direction::North {
-                            if self.is_capture(square, direction, None).is_ok() {
-                                return true;
+                            for capture_type in vec![CaptureType::Approach, CaptureType::Withdrawal]
+                            {
+                                if self
+                                    .is_capture(square, direction, Some(capture_type))
+                                    .is_ok()
+                                {
+                                    return true;
+                                }
                             }
                         }
                     }
@@ -304,6 +335,7 @@ impl BaseBoard {
         return false;
     }
 
+    /// Given a legal capture move, execute it on the board
     pub fn make_capture(
         &mut self,
         from: Square,
@@ -395,32 +427,60 @@ mod tests {
 
     #[test]
     fn test_piece_at() {
-        todo!()
+        assert_eq!(
+            BaseBoard::new().piece_at(Square::from((0, 0))),
+            Some(Piece::White)
+        );
     }
 
     #[test]
     fn test_remove_piece_at() {
-        todo!()
+        let mut board: BaseBoard = BaseBoard::new();
+        assert!(board.remove_piece_at(Square::from(0)).is_some());
+        assert!(board.piece_at(Square::from(0)).is_none());
     }
 
     #[test]
     fn test_set_piece_at() {
-        todo!()
+        let mut board: BaseBoard = BaseBoard::new();
+        board.set_piece_at(Piece::Black, Square::from(0));
+        assert_eq!(board.piece_at(Square::from(0)).unwrap(), Piece::Black);
     }
 
     #[test]
     fn test_make_paika() {
-        todo!()
+        let mut board: BaseBoard = BaseBoard::try_from("W8/9/9/9/9").unwrap();
+        assert!(board.make_paika(Square::from(0), Direction::North).is_ok());
+        assert_eq!(board.piece_at(Square::from((1, 0))), Some(Piece::White));
+        assert_eq!(board.piece_at(Square::from((0, 0))), None);
     }
 
     #[test]
-    fn test_capture_exists() {
+    fn test_is_approach_capture() {
+        assert!(BaseBoard::new()
+            .is_approach_capture(Square::from((1, 4)), Direction::North)
+            .is_ok());
+    }
+
+    #[test]
+    fn test_is_withdraw_capture() {
         todo!()
     }
 
     #[test]
     fn test_is_capture() {
-        todo!()
+        assert!(BaseBoard::new()
+            .is_capture(
+                Square::from((1, 4)),
+                Direction::North,
+                Some(CaptureType::Approach)
+            )
+            .is_ok());
+    }
+
+    #[test]
+    fn test_capture_exists() {
+        assert!(BaseBoard::new().capture_exists(Piece::White));
     }
 
     #[test]

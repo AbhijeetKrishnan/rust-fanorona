@@ -5,6 +5,7 @@ use crate::bitboard::{BitBoard, COLS, ROWS};
 use crate::direction::Direction;
 use crate::FanoronaError;
 
+/// A representation of a square on the Fanorona board
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Square(usize);
 
@@ -35,6 +36,19 @@ impl From<usize> for Square {
 }
 
 impl From<(usize, usize)> for Square {
+    /// Get a Square from a (row, col) tuple
+    ///
+    /// Rows are numbered 0 to 4 starting with the bottom-most row
+    /// Columns are numbered 0 to 8 starting with the left-most column
+    /// ```
+    ///      4 B B B B B B B B B
+    ///   ↑  3 B B B B B B B B B
+    /// rows 2 B W B W . B W B W
+    ///      1 W W W W W W W W W
+    ///      0 W W W W W W W W W
+    ///        0 1 2 3 4 5 6 7 8
+    ///             columns ->
+    /// ```
     fn from(move_tuple: (usize, usize)) -> Square {
         Square(move_tuple.0 * COLS + move_tuple.1)
     }
@@ -43,6 +57,12 @@ impl From<(usize, usize)> for Square {
 impl Into<(usize, usize)> for Square {
     fn into(self) -> (usize, usize) {
         (self.0 / COLS, self.0 % COLS)
+    }
+}
+
+impl Into<usize> for Square {
+    fn into(self) -> usize {
+        self.0
     }
 }
 
@@ -65,6 +85,12 @@ impl Index<Square> for [[BitBoard; 8]; ROWS * COLS] {
 impl TryFrom<&str> for Square {
     type Error = FanoronaError;
 
+    /// Parse a square string into a Square
+    ///
+    /// Squares are denoted using a two-character string, with the first character representing the column from "A" to
+    /// "I", and the second character representing the row from "1" to "5".
+    ///
+    /// The format for square strings is based directly on how squares are represented in chess.
     fn try_from(square_str: &str) -> Result<Square, FanoronaError> {
         let row = square_str
             .chars()
@@ -106,6 +132,9 @@ impl Square {
         }
     }
 
+    /// Get the resultant square after translating it by one in a particular direction
+    ///
+    /// If the resultant square would be out of bounds, None is returned.
     #[inline]
     pub const fn translate(self, direction: Direction) -> Option<Square> {
         let final_pos = (self.0 as i8) + direction.to_increment();
@@ -131,6 +160,7 @@ impl Iterator for Square {
     }
 }
 
+/// A struct to enable iteration over a line of squares in a particular direction
 pub struct SquareIterator(Square, Direction);
 
 impl SquareIterator {
@@ -210,6 +240,8 @@ mod tests {
 
     #[test]
     fn test_square_itr() {
-        todo!()
+        for square in SquareIterator(Square::from(0), Direction::North) {
+            assert_eq!(square.0 % 9, 0); // square goes as 0, 9, 18, 27, 36
+        }
     }
 }
