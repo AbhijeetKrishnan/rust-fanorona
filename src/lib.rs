@@ -8,8 +8,8 @@ mod bitboard;
 mod base_board;
 use base_board::BaseBoard;
 
-mod action;
-use action::Move;
+mod r#move;
+use r#move::Move;
 
 mod square;
 use square::Square;

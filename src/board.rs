@@ -1,4 +1,4 @@
-use std::fmt::{self, write};
+use std::fmt::{self};
 
 use crate::{
     base_board::IsCaptureReason, bitboard, capture_type::CaptureType, direction::Direction,
@@ -292,12 +292,13 @@ impl Board {
     /// Return the list of all legal moves in the current game state
     pub fn legal_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
-        for from in Square::new(0).iter() {
-            if self.base_board.piece_at(*from) == Some(self.turn) {
+        let limit = Square::new(0).unwrap(); // TODO: this loop construction is ugly, please fix
+        for from in limit {
+            if self.base_board.piece_at(from) == Some(self.turn) {
                 for direction in Direction::North {
                     for capture_type in vec![CaptureType::Approach, CaptureType::Withdrawal] {
                         let move_ = Move::Move {
-                            from: *from,
+                            from: from,
                             direction,
                             capture_type: Some(capture_type),
                         };
@@ -373,16 +374,16 @@ mod tests {
             .is_ok());
     }
 
-    // TODO: fix failing test
     #[test]
     fn test_legal_moves() {
         let board = Board::new();
         let legal_moves = board.legal_moves();
-        assert_eq!(legal_moves.len(), 4);
-        assert!(legal_moves.contains(&Move::try_from("D2NEA").unwrap()));
-        assert!(legal_moves.contains(&Move::try_from("D3EA").unwrap()));
-        assert!(legal_moves.contains(&Move::try_from("E2NA").unwrap()));
-        assert!(legal_moves.contains(&Move::try_from("F2NWA").unwrap()));
+        assert_eq!(legal_moves.len(), 5);
+        assert!(legal_moves.contains(&Move::try_from("D2NEF").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("D3EF").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("D3EB").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("E2NF").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("F2NWF").unwrap()));
     }
 
     #[test]
@@ -391,16 +392,13 @@ mod tests {
         for _ in 1..times {
             let mut board = Board::new();
             loop {
-                println!("{}", board);
                 let legal_moves = board.legal_moves();
-                println!("{:?}", legal_moves);
                 if legal_moves.is_empty() {
                     break;
                 }
                 let move_ = legal_moves
                     .choose(&mut rand::thread_rng())
                     .expect("Failed to choose a legal move");
-                println!("{}", move_);
                 let _ = board.push(*move_).expect("Failed to push move");
             }
         }

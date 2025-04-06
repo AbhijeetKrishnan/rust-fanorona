@@ -59,7 +59,7 @@ impl TryFrom<&str> for Move {
         let re = Regex::new(
             r"(?x)
             ^(?P<from>[a-iA-I][1-5])
-            (?P<direction>n|s|e|w|nw|ne|sw|se|N|S|E|W|NW|NE|SW|SE)
+            (?P<direction>nw|ne|sw|se|NW|NE|SW|SE|n|s|e|w|N|S|E|W)
             (?P<capture_type>[fbFB])?
             |
             ^(?P<end_turn>[Xx])
@@ -134,6 +134,14 @@ mod tests {
             direction: Direction::North,
             capture_type: None,
         };
-        assert_eq!(action, Move::try_from(move_str).unwrap())
+        assert_eq!(action, Move::try_from(move_str).unwrap());
+
+        let move_str = "D2NEF";
+        let action = Move::Move {
+            from: Square::new(12).unwrap(),
+            direction: Direction::NorthEast,
+            capture_type: Some(CaptureType::Approach),
+        };
+        assert_eq!(action, Move::try_from(move_str).unwrap());
     }
 }
