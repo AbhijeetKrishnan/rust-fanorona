@@ -40,7 +40,7 @@ impl From<(usize, usize)> for Square {
     ///
     /// Rows are numbered 0 to 4 starting with the bottom-most row
     /// Columns are numbered 0 to 8 starting with the left-most column
-    /// ```
+    /// ```text
     ///      4 B B B B B B B B B
     ///   ↑  3 B B B B B B B B B
     /// rows 2 B W B W . B W B W

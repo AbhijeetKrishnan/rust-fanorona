@@ -464,7 +464,9 @@ mod tests {
 
     #[test]
     fn test_is_withdraw_capture() {
-        todo!()
+        assert!(BaseBoard::new()
+            .is_withdraw_capture(Square::from((2, 3)), Direction::East)
+            .is_ok());
     }
 
     #[test]
@@ -485,6 +487,13 @@ mod tests {
 
     #[test]
     fn test_make_capture() {
-        todo!()
+        let mut board: BaseBoard = BaseBoard::new();
+        assert!(board
+            .make_capture(
+                Square::from((1, 4)),
+                Direction::North,
+                Some(CaptureType::Approach)
+            )
+            .is_ok());
     }
 }

@@ -1,3 +1,5 @@
+#![warn(missing_docs)]
+
 extern crate regex;
 
 #[macro_use]

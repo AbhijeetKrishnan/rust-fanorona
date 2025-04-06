@@ -18,7 +18,7 @@ pub const COLS: usize = 9;
 ///
 /// The square indices correspond to the layout of the board as follows -
 ///
-/// ```
+/// ```text
 ///   [black] 36 37 38 39 40 41 42 43 44
 ///           27 28 29 30 31 32 33 34 35
 ///           18 19 20 21 22 23 24 25 26
@@ -45,7 +45,7 @@ impl_op_ex_commutative!(| |bb1: &BitBoard, bb2: &u64| -> BitBoard { BitBoard(bb1
 impl fmt::Display for BitBoard {
     /// Print a BitBoard as a 5x9 grid of the bits
     /// # Example
-    /// ```
+    /// ```text
     /// 0 0 0 0 0 0 0 0 0
     /// 0 0 0 0 0 0 0 0 0
     /// 0 1 0 1 0 0 1 0 1
@@ -90,7 +90,7 @@ impl BitBoard {
     ///
     /// # Example
     /// `ray(Square(12), Direction::NorthEast)` =
-    /// ```
+    /// ```text
     ///   0 0 0 0 0 0 1 0 0
     ///   0 0 0 0 0 1 0 0 0
     ///   0 0 0 0 1 0 0 0 0
@@ -145,7 +145,7 @@ impl BitBoard {
 impl TryFrom<&str> for BitBoard {
     type Error = FanoronaError;
 
-    /// Parse a comma-separated list of squares as a bitboard
+    /// Parse a comma-separated list of squares as a bitboard. If the string is "-", return an empty bitboard
     ///
     /// Used to parse the list of squares visited during a capture sequence
     fn try_from(value: &str) -> Result<Self, Self::Error> {
@@ -178,7 +178,14 @@ mod tests {
 
     #[test]
     fn test_ray() {
-        todo!();
+        assert_eq!(
+            BitBoard::ray(Square::new(12).unwrap(), Direction::NorthEast),
+            BitBoard(0x40100400000),
+        );
+        assert_eq!(
+            BitBoard::ray(Square::new(44).unwrap(), Direction::NorthEast),
+            BitBoard(0x0)
+        );
     }
 
     #[test]
@@ -186,6 +193,15 @@ mod tests {
         assert_eq!(BB_EMPTY.as_squares(), vec![]);
         assert_eq!(BB_A1.as_squares(), vec![Square::from(0)]);
         assert_eq!(BB_I5.as_squares(), vec![Square::from(44)]);
+    }
+
+    #[test]
+    fn test_try_from() {
+        assert_eq!(
+            BitBoard::try_from("A1,B2,C3").unwrap(),
+            BB_A1 | BB_B2 | BB_C3
+        );
+        assert!(BitBoard::try_from("X1").is_err());
     }
 }
 

@@ -59,6 +59,13 @@ pub struct Board {
 }
 
 impl fmt::Display for Board {
+    /// Display the board in a human-readable format
+    ///
+    /// The format is as follows:
+    /// - `board_str`: the string representation of the board
+    /// - `turn`: the current turn (white or black)
+    /// - `visited`: the visited squares in the current capturing sequence
+    /// - `last_capture`: the last capture made (if any)
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.last_capture {
             Some(last_capture) => write!(
@@ -66,7 +73,7 @@ impl fmt::Display for Board {
                 "{} {} {} {}",
                 self.base_board.to_string(),
                 self.turn,
-                self.visited
+                self.visited // TODO: this should be `-` if empty
                     .as_squares()
                     .iter()
                     .map(|&sq| sq.to_string())
@@ -79,7 +86,7 @@ impl fmt::Display for Board {
                 "{} {} {} {}",
                 self.base_board.to_string(),
                 self.turn,
-                self.visited
+                self.visited // TODO: this should be `-` if empty
                     .as_squares()
                     .iter()
                     .map(|&sq| sq.to_string())
@@ -94,6 +101,7 @@ impl fmt::Display for Board {
 impl TryFrom<&str> for Board {
     type Error = FanoronaError;
 
+    /// Parse a string representation of the board into a `Board` object
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let mut iter = value.split_whitespace();
         let board_str = iter.next().ok_or(FanoronaError::ParseError(String::from(
@@ -111,19 +119,28 @@ impl TryFrom<&str> for Board {
 
         let base_board = BaseBoard::try_from(board_str)?;
         let turn = Piece::try_from(turn_str)?;
-        let visited = bitboard::BitBoard::try_from(visited_str)?;
-        let last_capture = Move::try_from(last_capture_str)?;
+        let visited = if visited_str == "-" {
+            bitboard::BB_EMPTY
+        } else {
+            bitboard::BitBoard::try_from(visited_str)?
+        };
+        let last_capture = if last_capture_str == "-" {
+            None
+        } else {
+            Some(Move::try_from(last_capture_str)?)
+        };
 
         Ok(Board {
             base_board,
             turn,
             visited,
-            last_capture: Some(last_capture),
+            last_capture: last_capture,
         })
     }
 }
 
 impl Board {
+    /// Create a new board with the initial game state
     pub fn new() -> Board {
         Board {
             base_board: BaseBoard::new(),
@@ -324,42 +341,100 @@ mod tests {
 
     #[test]
     fn test_display() {
-        todo!()
+        let board = Board::new();
+        let display = board.to_string();
+        assert_eq!(
+            display,
+            "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB W  -"
+        );
     }
 
     #[test]
     fn test_try_from() {
-        todo!()
+        let base_board_str = "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB";
+        let turn_str = "W";
+        let visited_str = "-";
+        let last_capture_str = "-";
+
+        let board_str = format!(
+            "{} {} {} {}",
+            base_board_str, turn_str, visited_str, last_capture_str
+        );
+        let board = Board::try_from(board_str.as_str()).expect("Failed to parse board");
+
+        assert_eq!(board.base_board.to_string(), base_board_str);
+        assert_eq!(board.turn, Piece::White);
+        assert_eq!(board.visited, bitboard::BB_EMPTY);
+        assert_eq!(board.last_capture, None);
     }
 
     #[test]
     fn test_new() {
-        todo!()
+        let board = Board::new();
+        assert_eq!(
+            board.base_board.to_string(),
+            "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB"
+        );
+        assert_eq!(board.turn, Piece::White);
+        assert_eq!(board.visited, bitboard::BB_EMPTY);
+        assert_eq!(board.last_capture, None);
     }
 
     #[test]
     fn test_pass_turn() {
-        todo!()
+        let mut board = Board::new();
+        assert_eq!(board.turn, Piece::White);
+        board.pass_turn();
+        assert_eq!(board.turn, Piece::Black);
     }
 
     #[test]
     fn test_in_capture_seq() {
-        todo!()
+        let mut board = Board::new();
+        assert_eq!(board.in_capture_seq(), false);
+        board.last_capture = Some(Move::Move {
+            from: Square::try_from("e2").expect("Failed to create move e2"),
+            direction: Direction::North,
+            capture_type: None,
+        });
+        assert_eq!(board.in_capture_seq(), true);
     }
 
     #[test]
     fn test_push() {
-        todo!()
+        let mut board = Board::new();
+        let move_ = Move::Move {
+            from: Square::try_from("e2").expect("Failed to create move e2"),
+            direction: Direction::North,
+            capture_type: None,
+        };
+        assert!(board.push(move_).is_ok());
+        assert_eq!(
+            board.base_board.piece_at(Square::try_from("e3").unwrap()),
+            Some(Piece::White)
+        );
     }
 
     #[test]
     fn test_push_str() {
-        todo!()
+        let mut board = Board::new();
+        let move_str = "E2N";
+        assert!(board.push_str(move_str).is_ok());
+        assert_eq!(
+            board.base_board.piece_at(Square::try_from("e3").unwrap()),
+            Some(Piece::White)
+        );
     }
 
     #[test]
     fn test_is_capture() {
-        todo!()
+        let board = Board::new();
+        let move_ = Move::Move {
+            from: Square::try_from("e2").expect("Failed to create move e2"),
+            direction: Direction::North,
+            capture_type: Some(CaptureType::Approach),
+        };
+        assert!(board.is_capture(move_).is_ok());
     }
 
     #[test]
