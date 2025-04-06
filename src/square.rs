@@ -138,7 +138,7 @@ impl Square {
     #[inline]
     pub const fn translate(self, direction: Direction) -> Option<Square> {
         let final_pos = (self.0 as i8) + direction.to_increment();
-        if final_pos < 0 || (final_pos as usize) > ROWS * COLS {
+        if final_pos < 0 || (final_pos as usize) >= ROWS * COLS {
             None
         } else {
             Some(Square(final_pos as usize))

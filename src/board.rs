@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, write};
 
 use crate::{
     base_board::IsCaptureReason, bitboard, capture_type::CaptureType, direction::Direction,
@@ -18,6 +18,7 @@ pub enum IsLegalReason {
     EndTurnWithoutCaptureSequence,
     LastCaptureNotByCurrentPlayer,
     LastCaptureNoneInCaptureSequence,
+    MovingToOccupiedSquare,
 }
 
 impl std::error::Error for IsLegalReason {}
@@ -36,6 +37,7 @@ impl fmt::Display for IsLegalReason {
             IsLegalReason::EndTurnWithoutCaptureSequence => write!(f, "{}", "Cannot play end turn when not in a capturing sequence"),
             IsLegalReason::LastCaptureNotByCurrentPlayer => write!(f, "{}", "Last capture was not made by current player, so end turn cannot be played by the current player"),
             IsLegalReason::LastCaptureNoneInCaptureSequence => write!(f, "{}", "Last capture cannot be None in a capturing sequence"),
+            IsLegalReason::MovingToOccupiedSquare => write!(f, "{}", "Piece must move to an empty square"),
         }
     }
 }
@@ -206,8 +208,11 @@ impl Board {
 
                 let to = from
                     .translate(direction)
-                    .ok_or(IsLegalReason::PieceMovingOutOfBounds)
-                    .expect("The translated square should be valid");
+                    .ok_or(IsLegalReason::PieceMovingOutOfBounds)?;
+
+                if self.base_board.piece_at(to) != None {
+                    return Err(IsLegalReason::MovingToOccupiedSquare);
+                }
 
                 // if `last_capture` is set (i.e., in a capturing sequence), then ensure that -
                 // + the piece being moved is the one that was last moved
@@ -220,8 +225,7 @@ impl Board {
                 {
                     let lc_to = lc_from
                         .translate(lc_dir)
-                        .ok_or(IsLegalReason::LastCaptureOutOfBounds)
-                        .expect("The translated square should be valid");
+                        .ok_or(IsLegalReason::LastCaptureOutOfBounds)?;
                     if from != lc_to {
                         return Err(IsLegalReason::MoveMustFollowLastCapture);
                     }
@@ -266,8 +270,7 @@ impl Board {
                 {
                     let lc_to = lc_from
                         .translate(lc_dir)
-                        .ok_or(IsLegalReason::LastCaptureOutOfBounds)
-                        .expect("The translated square should be valid");
+                        .ok_or(IsLegalReason::LastCaptureOutOfBounds)?;
                     if self.base_board.piece_at(lc_to) != Some(self.turn) {
                         return Err(IsLegalReason::LastCaptureNotByCurrentPlayer);
                     }
@@ -370,12 +373,18 @@ mod tests {
             .is_ok());
     }
 
+    // TODO: fix failing test
     #[test]
     fn test_legal_moves() {
-        todo!()
+        let board = Board::new();
+        let legal_moves = board.legal_moves();
+        assert_eq!(legal_moves.len(), 4);
+        assert!(legal_moves.contains(&Move::try_from("D2NEA").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("D3EA").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("E2NA").unwrap()));
+        assert!(legal_moves.contains(&Move::try_from("F2NWA").unwrap()));
     }
 
-    // TODO: fix failing test
     #[test]
     fn test_stress() {
         let times = 20;
