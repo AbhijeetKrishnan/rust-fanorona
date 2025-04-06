@@ -1,6 +1,6 @@
 # rust-fanorona
 
-`rust-fanorona` is a Fanorona library for Rust, with ~move generation~, move validation and support for a custom format for representing the Fanorona board and moves.
+`rust-fanorona` is a Fanorona library for Rust, with move generation, move validation and support for a custom format for representing the Fanorona board and moves.
 
 This is an opening move in `rust-fanorona` -
 
