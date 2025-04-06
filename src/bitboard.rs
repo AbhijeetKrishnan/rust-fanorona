@@ -130,7 +130,7 @@ impl BitBoard {
         bb
     }
 
-    /// Get the list of Squares that are set in the current BitBoard
+    /// Get the list of `Squares` that are set in the current `BitBoard`
     pub fn as_squares(&self) -> Vec<Square> {
         let mut squares: Vec<Square> = vec![];
         for i in 0..ROWS * COLS {

@@ -85,10 +85,10 @@ impl Index<Square> for [[BitBoard; 8]; ROWS * COLS] {
 impl TryFrom<&str> for Square {
     type Error = FanoronaError;
 
-    /// Parse a square string into a Square
+    /// Parse a square string into a `Square`
     ///
-    /// Squares are denoted using a two-character string, with the first character representing the column from "A" to
-    /// "I", and the second character representing the row from "1" to "5".
+    /// Squares are denoted using a two-character string, with the first character representing the column from `A` to
+    /// `I`, and the second character representing the row from `1` to `5`.
     ///
     /// The format for square strings is based directly on how squares are represented in chess.
     fn try_from(square_str: &str) -> Result<Square, FanoronaError> {
@@ -134,7 +134,7 @@ impl Square {
 
     /// Get the resultant square after translating it by one in a particular direction
     ///
-    /// If the resultant square would be out of bounds, None is returned.
+    /// If the resultant square would be out of bounds, `None` is returned.
     #[inline]
     pub const fn translate(self, direction: Direction) -> Option<Square> {
         let final_pos = (self.0 as i8) + direction.to_increment();

@@ -110,11 +110,11 @@ impl fmt::Display for BaseBoard {
 impl TryFrom<&str> for BaseBoard {
     type Error = FanoronaError;
 
-    /// Parse a Fanorona board string into a BaseBoard
+    /// Parse a Fanorona board string into a `BaseBoard`
     ///
     /// A Fanorona board string is an adaptation of [FEN](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation)
     /// with a few key simplifications -
-    /// + The only piece types are white ("W") and black ("B")
+    /// + The only piece types are white (`W`) and black (`B`)
     /// + There are only 5 ranks, but 9 files
     /// + The ordering of ranks is reversed, starting from rank 1 and going to rank 5
     fn try_from(board_str: &str) -> Result<Self, Self::Error> {

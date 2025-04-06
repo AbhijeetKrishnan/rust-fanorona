@@ -52,7 +52,7 @@ impl Into<usize> for Direction {
 impl TryFrom<&str> for Direction {
     type Error = FanoronaError;
 
-    /// Parse a direction string as a Direction
+    /// Parse a direction string as a `Direction`
     ///
     /// Parsing is case-insensitive
     fn try_from(dir_str: &str) -> Result<Direction, FanoronaError> {

@@ -9,7 +9,7 @@ pub enum CaptureType {
 }
 
 impl fmt::Display for CaptureType {
-    /// Print the capture type as [F]orward, or [B]ackward
+    /// Print the capture type as `F`orward, or `B`ackward
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let capture_type_str = match self {
             Self::Approach => 'F',
@@ -22,7 +22,7 @@ impl fmt::Display for CaptureType {
 impl TryFrom<&str> for CaptureType {
     type Error = FanoronaError;
 
-    /// Parse a capture type string (case-insensitive) into a CaptureType
+    /// Parse a capture type string (case-insensitive) into a `CaptureType`
     fn try_from(capture_type_str: &str) -> Result<CaptureType, FanoronaError> {
         match capture_type_str {
             "F" | "f" => Ok(CaptureType::Approach),   // [F]orward

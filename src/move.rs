@@ -50,11 +50,14 @@ impl fmt::Display for Move {
 impl TryFrom<&str> for Move {
     type Error = FanoronaError;
 
-    /// Parse a move string to create a Move
+    /// Parse a move string to create a `Move`
     ///
-    /// A move string specifies from square, direction and capture type ("F" for forward, "B" for backward) if any.
-    /// The end turn move is represented as "X".
+    /// A move string specifies from square, direction and capture type (`F` for forward, `B` for backward) if any.
+    /// The end turn move is represented as `X`.
     /// The parsing is case-insensitive.
+    ///
+    /// Example:
+    /// `D2NEF` represents one of the possible opening moves
     fn try_from(move_str: &str) -> Result<Move, FanoronaError> {
         let re = Regex::new(
             r"(?x)
