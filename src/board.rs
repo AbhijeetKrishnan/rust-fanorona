@@ -188,6 +188,7 @@ impl Board {
                 } else {
                     self.last_capture = None;
                     self.visited &= bitboard::BB_EMPTY;
+                    self.pass_turn();
                     self.base_board.make_paika(from, direction)
                 }
             }
@@ -302,7 +303,6 @@ impl Board {
     /// A convenience function to execute a move in the current game state given its representation as a move string
     pub fn push_str(&mut self, fmove_str: &'static str) -> Result<(), FanoronaError> {
         let fmove = Move::try_from(fmove_str)?;
-        println!("{:?}", fmove);
         self.push(fmove)
     }
 
@@ -330,6 +330,17 @@ impl Board {
             moves.push(Move::EndTurn);
         }
         moves
+    }
+
+    /// Return the winner of the game if there is one
+    ///
+    /// A winner is declared if the opponent has no legal moves to play
+    pub fn winner(&self) -> Option<Piece> {
+        if self.legal_moves().len() == 0 {
+            Some(self.turn.other())
+        } else {
+            None
+        }
     }
 }
 
@@ -450,6 +461,17 @@ mod tests {
     }
 
     #[test]
+    fn test_is_legal2() {
+        let board = Board::try_from("9/5WBBB/B8/9/7B1 B - -").unwrap();
+        let move_ = Move::Move {
+            from: Square::try_from("A3N").unwrap(),
+            direction: Direction::North,
+            capture_type: Some(CaptureType::Approach),
+        };
+        assert!(board.is_legal(move_).is_ok());
+    }
+
+    #[test]
     fn test_legal_moves() {
         let board = Board::new();
         let legal_moves = board.legal_moves();
@@ -459,6 +481,30 @@ mod tests {
         assert!(legal_moves.contains(&Move::try_from("D3EB").unwrap()));
         assert!(legal_moves.contains(&Move::try_from("E2NF").unwrap()));
         assert!(legal_moves.contains(&Move::try_from("F2NWF").unwrap()));
+    }
+
+    #[test]
+    fn test_legal_moves2() {
+        let board = Board::try_from("9/5WBBB/B8/9/7B1 B - -").unwrap();
+        let legal_moves = board.legal_moves();
+        assert_ne!(legal_moves.len(), 0);
+    }
+
+    #[test]
+    fn test_endgame() {
+        let board = Board::try_from("9/9/9/6W2/9 B - -").unwrap();
+        let legal_moves = board.legal_moves();
+        assert_eq!(legal_moves.len(), 0);
+        assert_eq!(board.winner(), Some(Piece::White));
+    }
+
+    #[test]
+    fn test_endgame2() {
+        let mut board = Board::try_from("W2WWW1W1/W1W1WW1W1/2W1W4/4W2W1/2WWW1W1W W - -").unwrap();
+        board.push_str("H4SF").unwrap();
+        let legal_moves = board.legal_moves();
+        assert_eq!(legal_moves.len(), 0);
+        assert_eq!(board.winner(), Some(Piece::White));
     }
 
     #[test]

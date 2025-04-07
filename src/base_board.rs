@@ -16,6 +16,7 @@ pub enum IsCaptureReason {
     SelfPieceOnCaptureSquare,
     AmbiguousCapture,
     EndTurnMove,
+    DestinationOccupied,
 }
 
 impl std::error::Error for IsCaptureReason {}
@@ -40,6 +41,9 @@ impl fmt::Display for IsCaptureReason {
                 "Approach and withdrawal captures possible without clarification"
             ),
             IsCaptureReason::EndTurnMove => write!(f, "{}", "End turn move cannot be a capture"),
+            IsCaptureReason::DestinationOccupied => {
+                write!(f, "{}", "Destination square is occupied")
+            }
         }
     }
 }
@@ -247,6 +251,9 @@ impl BaseBoard {
         let to = from
             .translate(direction)
             .ok_or(IsCaptureReason::SquareOutOfBounds)?;
+        if self.piece_at(to).is_some() {
+            return Err(IsCaptureReason::DestinationOccupied);
+        }
         let approach_sq = to
             .translate(direction)
             .ok_or(IsCaptureReason::CaptureOutOfBounds)?;
@@ -267,6 +274,12 @@ impl BaseBoard {
         direction: Direction,
     ) -> Result<(), IsCaptureReason> {
         let moved_piece = self.piece_at(from).ok_or(IsCaptureReason::FromEmpty)?;
+        let to = from
+            .translate(direction)
+            .ok_or(IsCaptureReason::SquareOutOfBounds)?;
+        if self.piece_at(to).is_some() {
+            return Err(IsCaptureReason::DestinationOccupied);
+        }
         let withdraw_sq = from
             .translate(direction.mirror())
             .ok_or(IsCaptureReason::CaptureOutOfBounds)?;
@@ -312,7 +325,8 @@ impl BaseBoard {
 
     /// Check if a legal capturing move exists for the given side
     pub fn capture_exists(&self, side: Piece) -> bool {
-        for square in Square::from(0) {
+        let limit = Square::new(0).unwrap(); // TODO: fix this iteration pattern
+        for square in limit {
             match self.piece_at(square) {
                 Some(piece) => {
                     if piece == side {
@@ -374,6 +388,7 @@ impl BaseBoard {
             }
         };
         opp_pieces &= !capture_mask;
+        self.pieces[moved_piece.other()] = opp_pieces;
         Ok(())
     }
 }
@@ -495,5 +510,9 @@ mod tests {
                 Some(CaptureType::Approach)
             )
             .is_ok());
+        assert_eq!(board.piece_at(Square::from((1, 4))), None);
+        assert_eq!(board.piece_at(Square::from((2, 4))), Some(Piece::White));
+        assert_eq!(board.piece_at(Square::from((3, 4))), None);
+        assert_eq!(board.piece_at(Square::from((4, 4))), None);
     }
 }

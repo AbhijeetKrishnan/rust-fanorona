@@ -5,8 +5,9 @@ fn main() {
     loop {
         println!("{}", board);
         let legal_moves = board.legal_moves();
-        println!("{:?}", legal_moves);
+
         if legal_moves.is_empty() {
+            println!("No legal moves available.");
             break;
         }
         let move_ = legal_moves
@@ -15,4 +16,5 @@ fn main() {
         println!("{}", move_);
         let _ = board.push(*move_).expect("Failed to push move");
     }
+    println!("{} wins!", board.winner().unwrap());
 }
