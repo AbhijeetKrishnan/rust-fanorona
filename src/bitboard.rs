@@ -341,6 +341,8 @@ pub const BB_COL: [BitBoard; COLS] = [
 /// Bitmasks for all possible rays
 ///
 /// `BB_RAY[square][direction]` gives the bitmask of all squares along `direction`, starting from `square`
+///
+/// generated using the `scripts/board_to_num.py` script
 pub const BB_RAY: [[BitBoard; 8]; ROWS * COLS] = [
     [
         BitBoard(0x1008040200),

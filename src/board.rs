@@ -67,34 +67,29 @@ impl fmt::Display for Board {
     /// - `visited`: the visited squares in the current capturing sequence
     /// - `last_capture`: the last capture made (if any)
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.last_capture {
-            Some(last_capture) => write!(
-                f,
-                "{} {} {} {}",
-                self.base_board.to_string(),
-                self.turn,
-                self.visited // TODO: this should be `-` if empty
-                    .as_squares()
-                    .iter()
-                    .map(|&sq| sq.to_string())
-                    .collect::<Vec<_>>()
-                    .join(","),
-                last_capture,
-            ),
-            None => write!(
-                f,
-                "{} {} {} {}",
-                self.base_board.to_string(),
-                self.turn,
-                self.visited // TODO: this should be `-` if empty
-                    .as_squares()
-                    .iter()
-                    .map(|&sq| sq.to_string())
-                    .collect::<Vec<_>>()
-                    .join(","),
-                "-"
-            ),
-        }
+        let visited_str = if self.visited == bitboard::BB_EMPTY {
+            "-"
+        } else {
+            &self
+                .visited
+                .as_squares()
+                .iter()
+                .map(|&sq| sq.to_string())
+                .collect::<Vec<_>>()
+                .join(",")
+        };
+        let last_capture_str = match self.last_capture {
+            Some(last_capture) => last_capture.to_string(),
+            None => "-".to_string(),
+        };
+        write!(
+            f,
+            "{} {} {} {}",
+            self.base_board.to_string(),
+            self.turn,
+            visited_str,
+            last_capture_str,
+        )
     }
 }
 
@@ -309,8 +304,7 @@ impl Board {
     /// Return the list of all legal moves in the current game state
     pub fn legal_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
-        let limit = Square::new(0).unwrap(); // TODO: this loop construction is ugly, please fix
-        for from in limit {
+        for from in Square(0) {
             if self.base_board.piece_at(from) == Some(self.turn) {
                 for direction in Direction::North {
                     for capture_type in vec![CaptureType::Approach, CaptureType::Withdrawal] {
@@ -356,7 +350,7 @@ mod tests {
         let display = board.to_string();
         assert_eq!(
             display,
-            "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB W  -"
+            "WWWWWWWWW/WWWWWWWWW/BWBW1BWBW/BBBBBBBBB/BBBBBBBBB W - -"
         );
     }
 

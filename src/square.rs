@@ -7,7 +7,7 @@ use crate::FanoronaError;
 
 /// A representation of a square on the Fanorona board
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Square(usize);
+pub struct Square(pub usize);
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -325,8 +325,7 @@ impl BaseBoard {
 
     /// Check if a legal capturing move exists for the given side
     pub fn capture_exists(&self, side: Piece) -> bool {
-        let limit = Square::new(0).unwrap(); // TODO: fix this iteration pattern
-        for square in limit {
+        for square in Square(0) {
             match self.piece_at(square) {
                 Some(piece) => {
                     if piece == side {
